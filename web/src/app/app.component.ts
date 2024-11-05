@@ -1,13 +1,47 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { JsonPipe, NgForOf } from '@angular/common';
+
+interface TimelineEntry {
+  label: string;
+}
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, JsonPipe, NgForOf],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent {
-  title = 'web';
+export class AppComponent implements OnInit {
+  timeline: TimelineEntry[] = [];
+
+  private readonly months = [
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
+  ];
+
+  ngOnInit(): void {
+    const d = new Date();
+    d.setDate(1);
+    for (let i = 0; i < 12; i++) {
+      this.timeline.push({
+        label:
+          this.months[d.getMonth()] +
+          ' ' +
+          d.getFullYear().toString().substring(2, 4),
+      });
+      d.setMonth(d.getMonth() + 1);
+    }
+  }
 }
