@@ -29,22 +29,33 @@ Desktop: 16–20 px
   .expenses {
     display: flex;
     flex-direction: column;
+    padding: 16px;
   }
 
   .timeline {
     align-items: center;
-    border: 1px solid black;
     display: flex;
+    overflow-x: scroll;
+    padding: 32px;
     width: 80%;
 
     .timeline-col {
       align-items: center;
+      background-color: #999999;
       display: flex;
       flex-direction: column;
-      width: 100%;
+      min-width: 115px;
 
       .timeline-col-name {
         font-weight: bold;
+      }
+
+      span {
+        width: 100%;
+      }
+
+      :nth-child(odd){
+        background-color: #aeaeae;
       }
     }
   }
