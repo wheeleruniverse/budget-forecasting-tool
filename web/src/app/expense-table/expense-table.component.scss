@@ -1,14 +1,12 @@
 @import "../../styles/variables";
 
-:host {
-  width: 95%;
-}
-
 .expense-table-container {
-  height: 700px;
-  margin: 16px;
+  border: 2px solid $background-4;
+  border-radius: 8px;
+  height: 80vh;
+  margin: 16px auto;
   overflow: auto;
-  width: 100%;
+  width: 96vw;
 }
 
 th,
@@ -46,10 +44,14 @@ td.mat-column-more {
   border-top: 1px solid #e0e0e0;
 }
 
+.mat-mdc-footer-row td {
+  border-top: 2px solid $background-4;
+}
+
 .mat-mdc-table-sticky-border-elem-right {
-  border-left: 1px solid #e0e0e0;
+  border-left: 2px solid $background-4;
 }
 
 .mat-mdc-table-sticky-border-elem-left {
-  border-right: 1px solid #e0e0e0;
+  border-right: 2px solid $background-4;
 }
