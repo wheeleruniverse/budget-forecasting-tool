@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { NgForOf } from '@angular/common';
+import { CurrencyPipe, NgForOf } from '@angular/common';
 
 interface Expense {
   name: string;
-  type: 'fixed' | 'debt';
+  type: 'fixed';
   valueMap: Map<string, string>;
 }
 
 @Component({
   selector: 'app-expense-table',
   standalone: true,
-  imports: [MatTableModule, MatIconModule, NgForOf],
+  imports: [MatTableModule, MatIconModule, NgForOf, CurrencyPipe],
   templateUrl: './expense-table.component.html',
   styleUrl: './expense-table.component.scss',
 })
@@ -33,37 +33,36 @@ export class ExpenseTableComponent implements OnInit {
   ];
 
   dataSource: Expense[] = [];
-  displayedColumns: string[] = [];
+  columns: string[] = [];
   valueMapKeys: string[] = [];
 
   ngOnInit(): void {
-    const name = 'Test123';
-    const type = 'fixed';
-    const valueMap = new Map<string, string>();
+    this.buildColumns();
 
-    const expense: Expense = {
-      name,
-      type,
-      valueMap,
-    };
-    this.dataSource.push(expense);
+    for (let i = 1; i < 101; i++) {
+      this.dataSource.push({
+        name: 'Test' + i,
+        type: 'fixed',
+        valueMap: new Map(this.valueMapKeys.map((key) => [key, i.toString()])),
+      });
+    }
+  }
 
+  moreClick(): void {
+    console.log('more clicked');
+  }
+
+  private buildColumns() {
     const d = new Date();
     d.setDate(1);
     for (let i = 0; i < 36; i++) {
       const shortMonth = this.months[d.getMonth()];
       const shortYear = d.getFullYear().toString().substring(2, 4);
-      expense.valueMap.set(`${shortMonth} ${shortYear}`, 'value' + i);
+      this.valueMapKeys.push(`${shortMonth} ${shortYear}`);
 
       d.setMonth(d.getMonth() + 1);
     }
 
-    this.valueMapKeys = Array.from(expense.valueMap.keys());
-
-    this.displayedColumns = ['name', ...this.valueMapKeys, 'more'];
-  }
-
-  moreClick(): void {
-    console.log('more clicked');
+    this.columns = ['name', ...this.valueMapKeys, 'more'];
   }
 }

@@ -1,26 +1,49 @@
+@import "../../styles/variables";
+
 :host {
-  width: 90%;
+  width: 95%;
 }
 
 .expense-table-container {
+  height: 700px;
   margin: 16px;
   overflow: auto;
   width: 100%;
 }
 
 th,
-td {
-  min-width: 115px;
+.mat-mdc-footer-cell {
+  font-weight: bold;
+}
 
-  &.more {
-    cursor: pointer;
-    min-width: 20px;
+th,
+td {
+  color: black;
+  min-width: 115px;
+  text-align: center;
+
+  &:nth-child(even) {
+    background-color: $background-1;
+  }
+
+  &:nth-child(odd) {
+    background-color: $background-2;
   }
 }
 
-th.mat-column-position,
-td.mat-column-position {
-  padding-left: 8px;
+th.mat-column-name,
+td.mat-column-name {
+  font-weight: bold;
+}
+
+th.mat-column-more,
+td.mat-column-more {
+  cursor: pointer;
+  min-width: 20px !important;
+}
+
+.mat-mdc-table-sticky {
+  border-top: 1px solid #e0e0e0;
 }
 
 .mat-mdc-table-sticky-border-elem-right {
