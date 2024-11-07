@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { JsonPipe, NgForOf } from '@angular/common';
+import { MatTableModule } from '@angular/material/table';
+import { ExpenseTableComponent } from './expense-table/expense-table.component';
 
 interface TimelineEntry {
   label: string;
@@ -9,7 +11,13 @@ interface TimelineEntry {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, JsonPipe, NgForOf],
+  imports: [
+    RouterOutlet,
+    JsonPipe,
+    NgForOf,
+    MatTableModule,
+    ExpenseTableComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
