@@ -1,38 +1,38 @@
-<section class="example-container mat-elevation-z8" tabindex="0">
-  <table mat-table [dataSource]="dataSource">
-    <!-- Name Column -->
-    <ng-container matColumnDef="name" sticky>
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-    </ng-container>
+<div class="expense-table-container">
+  <section class="mat-elevation-z8" tabindex="0">
+    <table mat-table [dataSource]="dataSource">
+      <ng-container matColumnDef="name" sticky>
+        <th mat-header-cell *matHeaderCellDef>&nbsp;</th>
+        <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+      </ng-container>
 
-    <!-- Position Column -->
-    <ng-container matColumnDef="position">
-      <th mat-header-cell *matHeaderCellDef>No.</th>
-      <td mat-cell *matCellDef="let element">{{ element.position }}</td>
-    </ng-container>
+      <ng-container *ngFor="let monthLabel of valueMapKeys">
+        <ng-container [matColumnDef]="monthLabel">
+          <th mat-header-cell *matHeaderCellDef>{{ monthLabel }}</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.valueMap.get(monthLabel) }}
+          </td>
+        </ng-container>
+      </ng-container>
 
-    <!-- Weight Column -->
-    <ng-container matColumnDef="weight">
-      <th mat-header-cell *matHeaderCellDef>Weight</th>
-      <td mat-cell *matCellDef="let element">{{ element.weight }}</td>
-    </ng-container>
+      <ng-container matColumnDef="more" stickyEnd>
+        <th
+          class="more"
+          mat-header-cell
+          *matHeaderCellDef
+          aria-label="row actions"
+        >
+          &nbsp;
+        </th>
+        <td class="more" mat-cell *matCellDef="let element">
+          <mat-icon [class]="element.name" (click)="moreClick()"
+            >more_vert</mat-icon
+          >
+        </td>
+      </ng-container>
 
-    <!-- Symbol Column -->
-    <ng-container matColumnDef="symbol">
-      <th mat-header-cell *matHeaderCellDef>Symbol</th>
-      <td mat-cell *matCellDef="let element">{{ element.symbol }}</td>
-    </ng-container>
-
-    <!-- Star Column -->
-    <ng-container matColumnDef="star" stickyEnd>
-      <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-      <td mat-cell *matCellDef="let element">
-        <mat-icon>more_vert</mat-icon>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-  </table>
-</section>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </section>
+</div>

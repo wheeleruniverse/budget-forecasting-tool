@@ -1,44 +1,69 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { NgForOf } from '@angular/common';
+
+interface Expense {
+  name: string;
+  type: 'fixed' | 'debt';
+  valueMap: Map<string, string>;
+}
 
 @Component({
   selector: 'app-expense-table',
   standalone: true,
-  imports: [MatTableModule, MatIconModule],
+  imports: [MatTableModule, MatIconModule, NgForOf],
   templateUrl: './expense-table.component.html',
   styleUrl: './expense-table.component.scss',
 })
-export class ExpenseTableComponent {
-  displayedColumns = [
-    'name',
-    'position',
-    'weight',
-    'symbol',
-    'position',
-    'weight',
-    'symbol',
-    'star',
+export class ExpenseTableComponent implements OnInit {
+  private readonly months = [
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
   ];
-  dataSource = ELEMENT_DATA;
-}
 
-export interface PeriodicElement {
-  name: string;
-  position: number;
-  weight: number;
-  symbol: string;
-}
+  dataSource: Expense[] = [];
+  displayedColumns: string[] = [];
+  valueMapKeys: string[] = [];
 
-const ELEMENT_DATA: PeriodicElement[] = [
-  { position: 1, name: 'Hydrogen', weight: 1.0079, symbol: 'H' },
-  { position: 2, name: 'Helium', weight: 4.0026, symbol: 'He' },
-  { position: 3, name: 'Lithium', weight: 6.941, symbol: 'Li' },
-  { position: 4, name: 'Beryllium', weight: 9.0122, symbol: 'Be' },
-  { position: 5, name: 'Boron', weight: 10.811, symbol: 'B' },
-  { position: 6, name: 'Carbon', weight: 12.0107, symbol: 'C' },
-  { position: 7, name: 'Nitrogen', weight: 14.0067, symbol: 'N' },
-  { position: 8, name: 'Oxygen', weight: 15.9994, symbol: 'O' },
-  { position: 9, name: 'Fluorine', weight: 18.9984, symbol: 'F' },
-  { position: 10, name: 'Neon', weight: 20.1797, symbol: 'Ne' },
-];
+  ngOnInit(): void {
+    const name = 'Test123';
+    const type = 'fixed';
+    const valueMap = new Map<string, string>();
+
+    const expense: Expense = {
+      name,
+      type,
+      valueMap,
+    };
+    this.dataSource.push(expense);
+
+    const d = new Date();
+    d.setDate(1);
+    for (let i = 0; i < 36; i++) {
+      const shortMonth = this.months[d.getMonth()];
+      const shortYear = d.getFullYear().toString().substring(2, 4);
+      expense.valueMap.set(`${shortMonth} ${shortYear}`, 'value' + i);
+
+      d.setMonth(d.getMonth() + 1);
+    }
+
+    this.valueMapKeys = Array.from(expense.valueMap.keys());
+
+    this.displayedColumns = ['name', ...this.valueMapKeys, 'more'];
+  }
+
+  moreClick(): void {
+    console.log('more clicked');
+  }
+}

@@ -1,17 +1,21 @@
-.example-container {
-  height: 400px;
-  width: 550px;
-  max-width: 100%;
+:host {
+  width: 90%;
+}
+
+.expense-table-container {
+  margin: 16px;
   overflow: auto;
+  width: 100%;
 }
 
-table {
-  width: 800px;
-}
+th,
+td {
+  min-width: 115px;
 
-td.mat-column-star {
-  width: 20px;
-  padding-right: 8px;
+  &.more {
+    cursor: pointer;
+    min-width: 20px;
+  }
 }
 
 th.mat-column-position,
