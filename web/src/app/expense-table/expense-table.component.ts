@@ -3,9 +3,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { CurrencyPipe, NgForOf } from '@angular/common';
 
+enum ExpenseType {
+  Fixed,
+}
+
 interface Expense {
   name: string;
-  type: 'fixed';
+  type: ExpenseType;
   valueMap: Map<string, string>;
 }
 
@@ -39,13 +43,24 @@ export class ExpenseTableComponent implements OnInit {
   ngOnInit(): void {
     this.buildColumns();
 
-    for (let i = 1; i < 101; i++) {
+    for (let i = 1; i < 1; i++) {
       this.dataSource.push({
         name: 'Test' + i,
-        type: 'fixed',
+        type: ExpenseType.Fixed,
         valueMap: new Map(this.valueMapKeys.map((key) => [key, i.toString()])),
       });
     }
+  }
+
+  createExpense(): void {
+    this.dataSource.push({
+      name: 'createExpenseTest',
+      type: ExpenseType.Fixed,
+      valueMap: new Map(this.valueMapKeys.map((key) => [key, '100'])),
+    });
+
+    // refresh the table
+    this.dataSource = [...this.dataSource];
   }
 
   moreClick(): void {

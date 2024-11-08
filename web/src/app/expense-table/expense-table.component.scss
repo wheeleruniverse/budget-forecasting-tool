@@ -9,6 +9,10 @@
   width: 96vw;
 }
 
+.create-expense-button {
+  cursor: pointer;
+}
+
 th,
 .mat-mdc-footer-cell {
   font-weight: bold;
@@ -32,6 +36,7 @@ td {
 th.mat-column-name,
 td.mat-column-name {
   font-weight: bold;
+  min-width: 230px !important;
 }
 
 th.mat-column-more,

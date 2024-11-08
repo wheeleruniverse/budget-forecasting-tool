@@ -4,7 +4,11 @@
       <ng-container matColumnDef="name" sticky>
         <th mat-header-cell *matHeaderCellDef>&nbsp;</th>
         <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-        <td mat-footer-cell *matFooterCellDef>&nbsp;</td>
+        <td mat-footer-cell *matFooterCellDef>
+          <mat-icon class="create-expense-button" (click)="createExpense()">
+            add_circle
+          </mat-icon>
+        </td>
       </ng-container>
 
       <ng-container *ngFor="let monthLabel of valueMapKeys">
