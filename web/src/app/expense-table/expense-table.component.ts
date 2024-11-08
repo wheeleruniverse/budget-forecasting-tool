@@ -1,5 +1,5 @@
 import { CurrencyPipe, NgForOf } from '@angular/common';
-import { Component, inject, model, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -73,6 +73,7 @@ export class ExpenseTableComponent implements OnInit {
   }
 
   openDialog(): void {
+    this.animal.set('');
     const dialogRef = this.dialog.open(ExpenseTableDialogComponent, {
       data: { name: this.name(), animal: this.animal() },
     });
@@ -81,6 +82,7 @@ export class ExpenseTableComponent implements OnInit {
       console.log('The dialog was closed');
       if (result !== undefined) {
         this.animal.set(result);
+        this.createExpense();
       }
     });
   }
@@ -89,7 +91,7 @@ export class ExpenseTableComponent implements OnInit {
     this.dataSource.push({
       name: 'createExpenseTest',
       type: ExpenseType.Fixed,
-      valueMap: new Map(this.valueMapKeys.map(key => [key, '100'])),
+      valueMap: new Map(this.valueMapKeys.map(key => [key, this.animal()])),
     });
 
     // refresh the table
