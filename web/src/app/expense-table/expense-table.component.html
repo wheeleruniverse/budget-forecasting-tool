@@ -1,4 +1,22 @@
 <div class="expense-table-container">
+  <div>
+    <ol>
+      <li>
+        <mat-form-field>
+          <mat-label>What's your name?</mat-label>
+          <input matInput [(ngModel)]="name" />
+        </mat-form-field>
+      </li>
+      <li>
+        <button mat-raised-button (click)="openDialog()">Pick one</button>
+      </li>
+      @if (animal()) {
+        <li>
+          You chose: <em>{{ animal() }}</em>
+        </li>
+      }
+    </ol>
+  </div>
   <section class="mat-elevation-z8" tabindex="0">
     <table mat-table [dataSource]="dataSource">
       <ng-container matColumnDef="name" sticky>

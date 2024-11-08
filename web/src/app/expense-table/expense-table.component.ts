@@ -1,7 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { CurrencyPipe, NgForOf } from '@angular/common';
+import { Component, inject, model, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatTableModule } from '@angular/material/table';
+import { ExpenseTableDialogComponent } from './expense-table-dialog/expense-table-dialog.component';
 
 enum ExpenseType {
   Fixed,
@@ -16,11 +22,25 @@ interface Expense {
 @Component({
   selector: 'app-expense-table',
   standalone: true,
-  imports: [MatTableModule, MatIconModule, NgForOf, CurrencyPipe],
+  imports: [
+    MatTableModule,
+    MatIconModule,
+    NgForOf,
+    CurrencyPipe,
+    MatLabel,
+    MatFormField,
+    FormsModule,
+    MatInput,
+    MatButton,
+  ],
   templateUrl: './expense-table.component.html',
   styleUrl: './expense-table.component.scss',
 })
 export class ExpenseTableComponent implements OnInit {
+  readonly animal = signal('');
+  readonly name = model('');
+  readonly dialog = inject(MatDialog);
+
   private readonly months = [
     'JAN',
     'FEB',
@@ -47,16 +67,29 @@ export class ExpenseTableComponent implements OnInit {
       this.dataSource.push({
         name: 'Test' + i,
         type: ExpenseType.Fixed,
-        valueMap: new Map(this.valueMapKeys.map((key) => [key, i.toString()])),
+        valueMap: new Map(this.valueMapKeys.map(key => [key, i.toString()])),
       });
     }
+  }
+
+  openDialog(): void {
+    const dialogRef = this.dialog.open(ExpenseTableDialogComponent, {
+      data: { name: this.name(), animal: this.animal() },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+      if (result !== undefined) {
+        this.animal.set(result);
+      }
+    });
   }
 
   createExpense(): void {
     this.dataSource.push({
       name: 'createExpenseTest',
       type: ExpenseType.Fixed,
-      valueMap: new Map(this.valueMapKeys.map((key) => [key, '100'])),
+      valueMap: new Map(this.valueMapKeys.map(key => [key, '100'])),
     });
 
     // refresh the table
