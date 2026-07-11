@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Sample Household Budget",
+    "baseCurrency": "EUR",
+    "fxRates": {
+      "USD": 0.92
+    },
+    "description": "Example data showing every feature, including multi-currency accounts. Open the Data dialog for a field reference, download this template, replace the values with your own, and upload it — your data never leaves your browser."
+  },
+  "accounts": [
+    {
+      "id": "eur-bills",
+      "name": "Bills Checking (EUR)",
+      "type": "checking",
+      "currency": "EUR",
+      "anchor": { "date": "2026-07-01", "balance": 2900.0 }
+    },
+    {
+      "id": "eur-joint-needs",
+      "name": "Joint Needs (EUR)",
+      "type": "checking",
+      "currency": "EUR",
+      "anchor": { "date": "2026-07-01", "balance": 1450.0 }
+    },
+    {
+      "id": "eur-joint-wants",
+      "name": "Joint Wants (EUR)",
+      "type": "checking",
+      "currency": "EUR",
+      "anchor": { "date": "2026-07-01", "balance": 380.25 }
+    },
+    {
+      "id": "eur-savings",
+      "name": "Savings (EUR)",
+      "type": "savings",
+      "currency": "EUR",
+      "anchor": { "date": "2026-07-01", "balance": 6200.0 }
+    },
+    {
+      "id": "usd-checking",
+      "name": "Checking (USD)",
+      "type": "checking",
+      "currency": "USD",
+      "anchor": { "date": "2026-07-01", "balance": 1850.0 }
+    },
+    {
+      "id": "usd-savings",
+      "name": "Savings (USD)",
+      "type": "savings",
+      "currency": "USD",
+      "anchor": { "date": "2026-07-01", "balance": 9500.0 }
+    }
+  ],
+  "rules": [
+    {
+      "id": "paycheck",
+      "name": "Paycheck",
+      "amount": 2400.0,
+      "category": "income",
+      "accountId": "usd-checking",
+      "recurrence": { "frequency": "biweekly", "start": "2026-07-03" }
+    },
+    {
+      "id": "partner-paycheck",
+      "name": "Partner paycheck",
+      "amount": 1700.0,
+      "category": "income",
+      "accountId": "eur-joint-needs",
+      "recurrence": {
+        "frequency": "semimonthly",
+        "start": "2026-07-01",
+        "days": [1, 15]
+      }
+    },
+    {
+      "id": "rent",
+      "name": "Rent",
+      "amount": -1650.0,
+      "category": "housing",
+      "accountId": "eur-bills",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-01",
+        "dayOfMonth": 1
+      }
+    },
+    {
+      "id": "utilities",
+      "name": "Utilities",
+      "amount": -210.0,
+      "category": "housing",
+      "accountId": "eur-bills",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-15",
+        "dayOfMonth": 15
+      }
+    },
+    {
+      "id": "health-insurance",
+      "name": "Health insurance",
+      "amount": -155.0,
+      "category": "health",
+      "accountId": "eur-bills",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-25",
+        "dayOfMonth": 25
+      }
+    },
+    {
+      "id": "groceries",
+      "name": "Groceries",
+      "amount": -150.0,
+      "category": "food",
+      "accountId": "eur-joint-needs",
+      "recurrence": { "frequency": "weekly", "start": "2026-07-05" }
+    },
+    {
+      "id": "dining-out",
+      "name": "Dining out",
+      "amount": -80.0,
+      "category": "fun",
+      "accountId": "eur-joint-wants",
+      "recurrence": { "frequency": "weekly", "start": "2026-07-04" }
+    },
+    {
+      "id": "streaming",
+      "name": "Streaming bundle",
+      "amount": -40.0,
+      "category": "fun",
+      "accountId": "eur-joint-wants",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-12",
+        "dayOfMonth": 12
+      }
+    },
+    {
+      "id": "card-autopay",
+      "name": "Card autopay",
+      "amount": -220.0,
+      "category": "subscriptions",
+      "accountId": "usd-checking",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-05",
+        "dayOfMonth": 5
+      }
+    },
+    {
+      "id": "annual-registration",
+      "name": "Annual registration",
+      "amount": -160.0,
+      "category": "auto",
+      "accountId": "usd-checking",
+      "recurrence": { "frequency": "yearly", "start": "2027-02-10" }
+    },
+    {
+      "id": "currency-transfer",
+      "name": "USD → EUR transfer",
+      "amount": 1500.0,
+      "category": "transfer",
+      "from": "usd-checking",
+      "to": "eur-bills",
+      "toAmount": 1372.5,
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-04",
+        "dayOfMonth": 4
+      }
+    },
+    {
+      "id": "eur-savings-sweep",
+      "name": "Savings sweep (EUR)",
+      "amount": 250.0,
+      "category": "transfer",
+      "from": "eur-joint-needs",
+      "to": "eur-savings",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-07-16",
+        "dayOfMonth": 16
+      }
+    },
+    {
+      "id": "usd-savings-sweep",
+      "name": "Savings sweep (USD)",
+      "amount": 400.0,
+      "category": "transfer",
+      "from": "usd-checking",
+      "to": "usd-savings",
+      "recurrence": {
+        "frequency": "quarterly",
+        "start": "2026-08-06",
+        "dayOfMonth": 6
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "appliance-repair",
+      "name": "Appliance repair",
+      "date": "2026-07-22",
+      "amount": -85.0,
+      "category": "household",
+      "accountId": "eur-joint-wants"
+    },
+    {
+      "id": "freelance-invoice",
+      "name": "Freelance invoice",
+      "date": "2026-08-05",
+      "amount": 1200.0,
+      "category": "income",
+      "accountId": "usd-checking"
+    },
+    {
+      "id": "vacation-fund",
+      "name": "Vacation fund kickoff",
+      "date": "2026-07-10",
+      "amount": 500.0,
+      "category": "transfer",
+      "from": "eur-savings",
+      "to": "eur-joint-wants"
+    }
+  ],
+  "overrides": [
+    {
+      "ruleId": "utilities",
+      "date": "2026-07-15",
+      "amount": -260.0,
+      "name": "Utilities (summer spike)"
+    },
+    {
+      "ruleId": "streaming",
+      "date": "2026-08-12",
+      "skip": true
+    },
+    {
+      "ruleId": "currency-transfer",
+      "date": "2026-09-04",
+      "amount": 2000.0,
+      "toAmount": 1830.0,
+      "name": "USD → EUR transfer (one-off larger amount)"
+    }
+  ]
+}

@@ -1,2 +1,28 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
 
-.idea/
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Build outputs
+coverage/
+
+# Personal financial data — never commit real values.
+# Keep your real budget JSON files outside the repo or match these patterns.
+*.budget.json
+budget-data/
