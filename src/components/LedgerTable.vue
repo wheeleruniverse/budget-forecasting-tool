@@ -240,6 +240,18 @@
                           </button>
                         </template>
                       </span>
+                      <span
+                        v-else
+                        class="ml-auto flex items-center gap-2"
+                        @click.stop
+                      >
+                        <button
+                          class="text-xs font-semibold text-red-500 hover:underline"
+                          @click="deleteEntry(line)"
+                        >
+                          Delete
+                        </button>
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -288,6 +300,7 @@ const {
   extendForward,
   setOverride,
   removeOverride,
+  removeEntry,
 } = useBudgetData();
 
 // The focus day starts expanded and follows the focus as it moves; manual
@@ -399,5 +412,14 @@ function skipOccurrence(line: LedgerLine): void {
 function resetOccurrence(line: LedgerLine): void {
   if (!line.ruleId || !line.originalDate) return;
   removeOverride(line.ruleId, line.originalDate);
+}
+
+/**
+ * One-time entries have no rule to override, so Delete removes the entry
+ * itself (unlike Skip, which only masks a rule occurrence). Transfer legs
+ * carry a ":from"/":to" suffix on the entry's id.
+ */
+function deleteEntry(line: LedgerLine): void {
+  removeEntry(line.transfer ? line.id.replace(/:(from|to)$/, '') : line.id);
 }
 </script>

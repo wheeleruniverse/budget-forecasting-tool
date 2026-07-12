@@ -17,8 +17,18 @@ import {
   resolveBaseCurrency,
   toCents,
 } from '@/utils/money';
+import {
+  statementToEntries,
+  type StatementColumnMapping,
+} from '@/utils/statements';
 import { normalizeBudgetConfig, validateBudgetConfig } from '@/utils/validate';
 import { computed, readonly, ref, type Ref } from 'vue';
+
+export interface StatementImportSummary {
+  imported: number;
+  duplicates: number;
+  problems: string[];
+}
 
 const TEMPLATE_PATH = '/budget-template.json';
 const WINDOW_BEFORE = 14;
@@ -117,6 +127,48 @@ async function importFile(file: File): Promise<boolean> {
       details: err,
     };
     return false;
+  }
+}
+
+/**
+ * Imports a bank statement CSV as one-time entries on the chosen account.
+ * Every readable row is added — duplicates included — and the summary
+ * reports how many look like duplicates so the user can delete them.
+ */
+async function importStatement(
+  file: File,
+  accountId: string,
+  mapping: StatementColumnMapping
+): Promise<StatementImportSummary | null> {
+  error.value = null;
+  try {
+    const result = statementToEntries(
+      await file.text(),
+      accountId,
+      config.value?.entries ?? [],
+      mapping
+    );
+    if (result.entries.length === 0) {
+      error.value = {
+        message: `"${file.name}" contained no importable rows.`,
+        details: result.problems,
+      };
+      return null;
+    }
+    mutate(c => {
+      c.entries.push(...result.entries);
+    });
+    return {
+      imported: result.entries.length,
+      duplicates: result.duplicateCount,
+      problems: result.problems,
+    };
+  } catch (err) {
+    error.value = {
+      message: `Could not read "${file.name}".`,
+      details: err,
+    };
+    return null;
   }
 }
 
@@ -407,6 +459,7 @@ export function useBudgetData() {
     canExtendBack,
     loadSample,
     importFile,
+    importStatement,
     exportConfig,
     downloadTemplate,
     clearError,

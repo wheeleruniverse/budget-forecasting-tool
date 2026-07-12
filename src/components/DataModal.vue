@@ -41,10 +41,10 @@
             <li><strong>Upload it</strong> at the start of each session.</li>
             <li>
               <strong>Export</strong> — only needed if you edit
-              <em>inside the app</em> (the Manage page, or Adjust/Skip on a
-              ledger row). Those edits exist only in memory until you export and
-              overwrite your file. If you edit your JSON directly and re-upload,
-              you never need this.
+              <em>inside the app</em> (the Manage page, Adjust/Skip/Delete on a
+              ledger row, or an uploaded statement). Those edits exist only in
+              memory until you export and overwrite your file. If you edit your
+              JSON directly and re-upload, you never need this.
             </li>
           </ol>
           <p class="mt-2 text-sm text-slate-600">
@@ -76,6 +76,16 @@
           >
             Download template
           </button>
+          <button
+            class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            :class="{
+              'border-wheeler-purple-300 bg-wheeler-purple-50 text-wheeler-purple-700':
+                statementOpen,
+            }"
+            @click="toggleStatementPanel"
+          >
+            Upload statement
+          </button>
           <p v-if="dirty" class="w-full text-xs text-amber-600">
             You have unsaved in-app changes — export before closing the tab.
           </p>
@@ -86,6 +96,100 @@
             class="hidden"
             @change="onFileSelected"
           />
+        </section>
+
+        <section
+          v-if="statementOpen"
+          class="rounded-md border border-slate-200 bg-slate-50 p-4"
+        >
+          <p class="text-sm text-slate-600">
+            Import a bank statement CSV export as
+            <strong>one-time entries</strong> on a single account. Tell it what
+            the name, amount, and date columns are called in
+            <em>your file's</em> header row (capitalization doesn't matter;
+            leave Name blank if there is no name-like column). Every other
+            column is ignored. Every row is added — uploading overlapping
+            statements creates duplicates, which you can delete from the ledger
+            or the Manage page.
+          </p>
+          <div class="mt-3 space-y-3">
+            <label class="block text-xs font-medium text-slate-500">
+              Account
+              <select
+                v-model="statementAccountId"
+                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
+              >
+                <option value="" disabled>Choose an account…</option>
+                <option
+                  v-for="account in config?.accounts ?? []"
+                  :key="account.id"
+                  :value="account.id"
+                >
+                  {{ account.name }}
+                </option>
+              </select>
+            </label>
+            <label class="block text-xs font-medium text-slate-500">
+              Name column
+              <input
+                v-model="statementMapping.name"
+                placeholder="(none)"
+                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
+              />
+            </label>
+            <label class="block text-xs font-medium text-slate-500">
+              Amount column
+              <input
+                v-model="statementMapping.amount"
+                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
+              />
+            </label>
+            <label class="block text-xs font-medium text-slate-500">
+              Date column
+              <input
+                v-model="statementMapping.date"
+                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
+              />
+            </label>
+            <button
+              class="rounded-md bg-wheeler-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-wheeler-purple-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              :disabled="!statementReady"
+              @click="statementInput?.click()"
+            >
+              Choose CSV
+            </button>
+            <input
+              ref="statementInput"
+              type="file"
+              accept=".csv,text/csv"
+              class="hidden"
+              @change="onStatementSelected"
+            />
+          </div>
+          <div v-if="statementSummary" class="mt-3 space-y-1 text-sm">
+            <p class="font-semibold text-emerald-700">
+              Imported {{ statementSummary.imported }}
+              {{ statementSummary.imported === 1 ? 'entry' : 'entries' }}
+              into {{ accountName(statementAccountId) }}.
+            </p>
+            <p
+              v-if="statementSummary.duplicates > 0"
+              class="text-xs text-amber-600"
+            >
+              {{ statementSummary.duplicates }} of them match existing entries
+              (same account, date, amount, and name) — likely an overlapping
+              statement. Delete the extras from the ledger day view or the
+              Manage page.
+            </p>
+            <ul
+              v-if="statementSummary.problems.length"
+              class="list-inside list-disc text-xs text-slate-500"
+            >
+              <li v-for="problem in statementSummary.problems" :key="problem">
+                Skipped — {{ problem }}
+              </li>
+            </ul>
+          </div>
         </section>
 
         <section
@@ -107,9 +211,16 @@
           <h3
             class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500"
           >
-            Field reference
+            <button
+              class="flex items-center gap-1.5 uppercase tracking-wide hover:text-slate-700"
+              :aria-expanded="fieldReferenceOpen"
+              @click="fieldReferenceOpen = !fieldReferenceOpen"
+            >
+              Field reference
+              <span class="text-xs">{{ fieldReferenceOpen ? '▾' : '▸' }}</span>
+            </button>
           </h3>
-          <dl class="space-y-3 text-sm">
+          <dl v-if="fieldReferenceOpen" class="space-y-3 text-sm">
             <div v-for="field in FIELD_REFERENCE" :key="field.name">
               <dt class="flex items-center gap-1 font-semibold text-slate-800">
                 <code class="rounded bg-slate-100 px-1">{{ field.name }}</code>
@@ -162,16 +273,66 @@
 </template>
 
 <script setup lang="ts">
-import { useBudgetData } from '@/composables/useBudgetData';
-import { ref } from 'vue';
+import {
+  useBudgetData,
+  type StatementImportSummary,
+} from '@/composables/useBudgetData';
+import { DEFAULT_COLUMN_MAPPING } from '@/utils/statements';
+import { computed, ref } from 'vue';
 
-const { dirty, error, importFile, exportConfig, downloadTemplate } =
-  useBudgetData();
+const {
+  config,
+  dirty,
+  error,
+  importFile,
+  importStatement,
+  exportConfig,
+  downloadTemplate,
+} = useBudgetData();
 
 const emit = defineEmits<{ close: [] }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const expandedExample = ref<string | null>(null);
+const fieldReferenceOpen = ref(true);
+
+const statementOpen = ref(false);
+const statementAccountId = ref('');
+const statementMapping = ref({ ...DEFAULT_COLUMN_MAPPING });
+const statementInput = ref<HTMLInputElement | null>(null);
+const statementSummary = ref<StatementImportSummary | null>(null);
+
+// Name may be blank (no name-like column); date and amount are required.
+const statementReady = computed(
+  () =>
+    statementAccountId.value !== '' &&
+    statementMapping.value.date.trim() !== '' &&
+    statementMapping.value.amount.trim() !== ''
+);
+
+function toggleStatementPanel(): void {
+  statementOpen.value = !statementOpen.value;
+  statementSummary.value = null;
+}
+
+function accountName(accountId: string): string {
+  return (
+    config.value?.accounts.find(a => a.id === accountId)?.name ?? accountId
+  );
+}
+
+async function onStatementSelected(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (file && statementReady.value) {
+    statementSummary.value = await importStatement(
+      file,
+      statementAccountId.value,
+      statementMapping.value
+    );
+  }
+  input.value = '';
+}
 
 function toggleExample(name: string): void {
   expandedExample.value = expandedExample.value === name ? null : name;

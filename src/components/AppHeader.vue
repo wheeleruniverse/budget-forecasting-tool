@@ -1,5 +1,7 @@
 <template>
-  <header class="border-b border-slate-200 bg-white">
+  <header
+    class="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm"
+  >
     <div
       class="flex w-full flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6"
     >
