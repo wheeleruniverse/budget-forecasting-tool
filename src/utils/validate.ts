@@ -1,6 +1,6 @@
-import type { BudgetConfig, MoneyMovement } from '@/types';
+import type { BudgetConfig, MoneyMovement, Rule } from '@/types';
 import { isValidDate } from './dates';
-import { isTransfer } from './ledger';
+import { expandOccurrences, isTransfer } from './ledger';
 import { resolveBaseCurrency } from './money';
 
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -115,10 +115,14 @@ export function validateBudgetConfig(data: unknown): string[] {
   };
 
   const ruleIds = new Set<string>();
+  const rulesById = new Map<string, Rule>();
   (config.rules ?? []).forEach((rule, i) => {
     const label = `rules[${i}]`;
     checkMovement(rule, label);
-    if (rule.id) ruleIds.add(rule.id);
+    if (rule.id) {
+      ruleIds.add(rule.id);
+      rulesById.set(rule.id, rule);
+    }
     if (!rule.recurrence) {
       errors.push(`${label}.recurrence is required.`);
       return;
@@ -153,6 +157,23 @@ export function validateBudgetConfig(data: unknown): string[] {
     }
     if (!override.date || !isValidDate(override.date)) {
       errors.push(`${label}.date must be a valid YYYY-MM-DD date.`);
+    } else {
+      // An override only applies when its date equals a date the recurrence
+      // actually generates, so a near-miss (e.g. the bank's post date) would
+      // otherwise be ignored silently.
+      const rule = rulesById.get(override.ruleId ?? '');
+      const recurrence = rule?.recurrence;
+      if (
+        recurrence &&
+        FREQUENCIES.includes(recurrence.frequency) &&
+        isValidDate(recurrence.start) &&
+        (!recurrence.end || isValidDate(recurrence.end)) &&
+        !expandOccurrences(recurrence, override.date).includes(override.date)
+      ) {
+        errors.push(
+          `${label}.date "${override.date}" does not match any scheduled occurrence of rule "${override.ruleId}" (use the rule's original date; moveTo shifts where it lands).`
+        );
+      }
     }
     if (override.moveTo && !isValidDate(override.moveTo)) {
       errors.push(`${label}.moveTo must be a valid YYYY-MM-DD date.`);

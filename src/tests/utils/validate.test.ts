@@ -133,6 +133,26 @@ describe('validateBudgetConfig', () => {
     expect(withRates).toEqual([]);
   });
 
+  it('flags override dates that match no occurrence of the rule', () => {
+    const errors = validateBudgetConfig({
+      ...valid,
+      overrides: [{ ruleId: 'rent', date: '2026-07-02', amount: -1050 }],
+    });
+    expect(errors.join(' ')).toContain(
+      'does not match any scheduled occurrence of rule "rent"'
+    );
+  });
+
+  it('accepts overrides on a scheduled occurrence date', () => {
+    const errors = validateBudgetConfig({
+      ...valid,
+      overrides: [
+        { ruleId: 'rent', date: '2026-08-01', amount: -1050, moveTo: '2026-08-03' },
+      ],
+    });
+    expect(errors).toEqual([]);
+  });
+
   it('flags overrides pointing at unknown rules', () => {
     const errors = validateBudgetConfig({
       ...valid,
