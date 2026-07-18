@@ -36,21 +36,26 @@
     </div>
 
     <div
-      v-if="canExtendBack"
-      class="border-b border-slate-100 px-4 py-2 text-center"
+      class="flex items-center justify-center gap-4 border-b border-slate-100 px-4 py-2"
     >
       <button
+        v-if="canExtendBack"
         class="text-xs font-semibold text-wheeler-purple-600 hover:text-wheeler-purple-800"
         @click="extendBack"
       >
         ↑ Load earlier days
       </button>
-    </div>
-    <div v-else class="border-b border-slate-100 px-4 py-2 text-center">
-      <p class="text-xs text-slate-400">
+      <p v-else class="text-xs text-slate-400">
         Start of recorded history — no balance anchor before
         {{ earliestAnchorDate }}
       </p>
+      <button
+        v-if="canShrinkBack"
+        class="text-xs font-semibold text-slate-400 hover:text-slate-600"
+        @click="shrinkBack"
+      >
+        ↓ Hide earlier days
+      </button>
     </div>
 
     <div class="overflow-x-auto">
@@ -262,12 +267,19 @@
       </table>
     </div>
 
-    <div class="px-4 py-2 text-center">
+    <div class="flex items-center justify-center gap-4 px-4 py-2">
       <button
         class="text-xs font-semibold text-wheeler-purple-600 hover:text-wheeler-purple-800"
         @click="extendForward"
       >
         ↓ Load later days
+      </button>
+      <button
+        v-if="canShrinkForward"
+        class="text-xs font-semibold text-slate-400 hover:text-slate-600"
+        @click="shrinkForward"
+      >
+        ↑ Hide later days
       </button>
     </div>
   </section>
@@ -296,8 +308,12 @@ const {
   formatForAccount,
   earliestAnchorDate,
   canExtendBack,
+  canShrinkBack,
+  canShrinkForward,
   extendBack,
   extendForward,
+  shrinkBack,
+  shrinkForward,
   setOverride,
   removeOverride,
   removeEntry,

@@ -228,6 +228,27 @@ function extendForward(): void {
   windowEnd.value = addDays(windowEnd.value, EXTEND_DAYS);
 }
 
+// Undo for the extend buttons: steps the window back in, never shrinking
+// past the default view around the focus date.
+const canShrinkBack = computed(
+  () => windowStart.value < addDays(focusDate.value, -WINDOW_BEFORE)
+);
+const canShrinkForward = computed(
+  () => windowEnd.value > addDays(focusDate.value, WINDOW_AFTER)
+);
+
+function shrinkBack(): void {
+  const floor = addDays(focusDate.value, -WINDOW_BEFORE);
+  const next = addDays(windowStart.value, EXTEND_DAYS);
+  windowStart.value = next > floor ? floor : next;
+}
+
+function shrinkForward(): void {
+  const ceiling = addDays(focusDate.value, WINDOW_AFTER);
+  const next = addDays(windowEnd.value, -EXTEND_DAYS);
+  windowEnd.value = next < ceiling ? ceiling : next;
+}
+
 function mutate(fn: (c: BudgetConfig) => void): void {
   if (!config.value) return;
   fn(config.value);
@@ -457,6 +478,8 @@ export function useBudgetData() {
     formatCurrency,
     earliestAnchorDate,
     canExtendBack,
+    canShrinkBack,
+    canShrinkForward,
     loadSample,
     importFile,
     importStatement,
@@ -466,6 +489,8 @@ export function useBudgetData() {
     setFocusDate,
     extendBack,
     extendForward,
+    shrinkBack,
+    shrinkForward,
     upsertAccount,
     removeAccount,
     upsertRule,
