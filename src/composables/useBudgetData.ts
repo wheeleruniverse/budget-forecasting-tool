@@ -258,8 +258,19 @@ function mutate(fn: (c: BudgetConfig) => void): void {
 function upsertAccount(account: Account): void {
   mutate(c => {
     const index = c.accounts.findIndex(a => a.id === account.id);
-    if (index >= 0) c.accounts[index] = account;
-    else c.accounts.push(account);
+    if (index >= 0) {
+      const oldAnchorDate = c.accounts[index].anchor.date;
+      c.accounts[index] = account;
+      // When the anchor advances, one-time entries on or before the new anchor
+      // date are already reflected in the recorded balance and are irrelevant.
+      if (account.anchor.date > oldAnchorDate) {
+        c.entries = c.entries.filter(
+          e => !(e.accountId === account.id && e.date <= account.anchor.date)
+        );
+      }
+    } else {
+      c.accounts.push(account);
+    }
   });
 }
 

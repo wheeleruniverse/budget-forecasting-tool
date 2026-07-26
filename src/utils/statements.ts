@@ -1,5 +1,5 @@
 import type { Entry } from '@/types';
-import { isValidDate } from './dates';
+import { isValid, parse } from 'date-fns';
 import { makeId } from './id';
 
 /**
@@ -86,10 +86,14 @@ export function parseStatementAmount(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Accepts "2026-07-05", "2026/07/05", or either with a trailing time. */
-function parseStatementDate(raw: string): string | null {
-  const date = raw.trim().slice(0, 10).replace(/\//g, '-');
-  return isValidDate(date) ? date : null;
+/** Parses a date cell using the user-supplied date-fns format string (e.g. "yyyy-MM-dd", "dd-MM-yyyy"). */
+function parseStatementDate(raw: string, format: string): string | null {
+  const d = parse(raw.trim(), format, new Date());
+  if (!isValid(d)) return null;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function duplicateKey(entry: Entry): string {
@@ -107,6 +111,8 @@ function duplicateKey(entry: Entry): string {
  */
 export interface StatementColumnMapping {
   date: string;
+  /** date-fns format string for the date column (e.g. "yyyy-MM-dd", "dd-MM-yyyy"). */
+  dateFormat: string;
   amount: string;
   /** Leave blank when the file has no name-like column. */
   name: string;
@@ -114,6 +120,7 @@ export interface StatementColumnMapping {
 
 export const DEFAULT_COLUMN_MAPPING: StatementColumnMapping = {
   date: 'Date',
+  dateFormat: 'yyyy-MM-dd',
   amount: 'Amount',
   name: 'Name',
 };
@@ -170,7 +177,7 @@ export function statementToEntries(
 
   for (let i = 1; i < rows.length; i++) {
     const cells = rows[i];
-    const date = parseStatementDate(cells[dateCol] ?? '');
+    const date = parseStatementDate(cells[dateCol] ?? '', mapping.dateFormat);
     const amount = parseStatementAmount(cells[amountCol] ?? '');
     if (date === null || amount === null) {
       problems.push(

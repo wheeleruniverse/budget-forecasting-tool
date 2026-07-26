@@ -144,13 +144,22 @@
                 class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
               />
             </label>
-            <label class="block text-xs font-medium text-slate-500">
-              Date column
-              <input
-                v-model="statementMapping.date"
-                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
-              />
-            </label>
+            <div class="flex items-end gap-3">
+              <label class="block text-xs font-medium text-slate-500">
+                Date column
+                <input
+                  v-model="statementMapping.date"
+                  class="mt-1 block w-40 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label class="block text-xs font-medium text-slate-500">
+                Date format
+                <input
+                  v-model="statementMapping.dateFormat"
+                  class="mt-1 block w-36 rounded border border-slate-300 px-2 py-1.5 text-sm font-mono"
+                />
+              </label>
+            </div>
             <button
               class="rounded-md bg-wheeler-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-wheeler-purple-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               :disabled="!statementReady"
@@ -278,7 +287,7 @@ import {
   type StatementImportSummary,
 } from '@/composables/useBudgetData';
 import { DEFAULT_COLUMN_MAPPING } from '@/utils/statements';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const {
   config,
@@ -288,6 +297,7 @@ const {
   importStatement,
   exportConfig,
   downloadTemplate,
+  clearError,
 } = useBudgetData();
 
 const emit = defineEmits<{ close: [] }>();
@@ -302,12 +312,18 @@ const statementMapping = ref({ ...DEFAULT_COLUMN_MAPPING });
 const statementInput = ref<HTMLInputElement | null>(null);
 const statementSummary = ref<StatementImportSummary | null>(null);
 
+watch(statementAccountId, () => {
+  statementSummary.value = null;
+  clearError();
+});
+
 // Name may be blank (no name-like column); date and amount are required.
 const statementReady = computed(
   () =>
     statementAccountId.value !== '' &&
     statementMapping.value.date.trim() !== '' &&
-    statementMapping.value.amount.trim() !== ''
+    statementMapping.value.amount.trim() !== '' &&
+    statementSummary.value === null
 );
 
 function toggleStatementPanel(): void {

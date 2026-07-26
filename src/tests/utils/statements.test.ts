@@ -147,6 +147,7 @@ describe('statementToEntries', () => {
 `;
     const result = statementToEntries(csv, 'acct', [], {
       date: 'Transaction Date',
+      dateFormat: 'yyyy-MM-dd',
       amount: 'Amount (EUR)',
       name: 'Payee',
     });
@@ -209,6 +210,7 @@ describe('statementToEntries', () => {
 `;
     const result = statementToEntries(csv, 'acct', [], {
       date: 'Date',
+      dateFormat: 'yyyy-MM-dd',
       amount: 'Amount',
       name: '',
     });
@@ -218,15 +220,18 @@ describe('statementToEntries', () => {
     ]);
   });
 
-  it('accepts dates with time suffixes and slash separators', () => {
+  it('parses DD-MM-YYYY dates (e.g. Wise exports)', () => {
     const csv = `"Date","Amount","Name"
-"2026-07-01 14:30:00","-5.00","With time"
-"2026/07/02","-6.00","With slashes"
+"05-07-2026","-12.00","Wise transfer"
 `;
-    const result = statementToEntries(csv, 'acct', []);
-    expect(result.entries.map(e => e.date)).toEqual([
-      '2026-07-01',
-      '2026-07-02',
-    ]);
+    const result = statementToEntries(csv, 'acct', [], {
+      date: 'Date',
+      dateFormat: 'dd-MM-yyyy',
+      amount: 'Amount',
+      name: 'Name',
+    });
+    expect(result.problems).toEqual([]);
+    expect(result.entries[0].date).toBe('2026-07-05');
   });
 });
+

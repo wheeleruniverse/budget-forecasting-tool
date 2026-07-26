@@ -20,6 +20,7 @@
     "prettier:write": "prettier --write src/"
   },
   "dependencies": {
+    "date-fns": "^4.4.0",
     "vue": "^3.4.0",
     "vue-router": "^4.2.5"
   },
