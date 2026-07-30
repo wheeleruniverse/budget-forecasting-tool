@@ -129,37 +129,46 @@
                 </option>
               </select>
             </label>
-            <label class="block text-xs font-medium text-slate-500">
-              Name column
-              <input
-                v-model="statementMapping.name"
-                placeholder="(none)"
-                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
-              />
-            </label>
-            <label class="block text-xs font-medium text-slate-500">
-              Amount column
-              <input
-                v-model="statementMapping.amount"
-                class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
-              />
-            </label>
-            <div class="flex items-end gap-3">
+            <template v-if="hasImportRules">
+              <p class="text-xs text-slate-500">
+                Using import rules defined in your JSON for
+                <strong>{{ selectedAccount?.name }}</strong> — column mapping is
+                handled by the account config.
+              </p>
+            </template>
+            <template v-else>
               <label class="block text-xs font-medium text-slate-500">
-                Date column
+                Name column
                 <input
-                  v-model="statementMapping.date"
-                  class="mt-1 block w-40 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  v-model="statementMapping.name"
+                  placeholder="(none)"
+                  class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
                 />
               </label>
               <label class="block text-xs font-medium text-slate-500">
-                Date format
+                Amount column
                 <input
-                  v-model="statementMapping.dateFormat"
-                  class="mt-1 block w-36 rounded border border-slate-300 px-2 py-1.5 text-sm font-mono"
+                  v-model="statementMapping.amount"
+                  class="mt-1 block w-64 rounded border border-slate-300 px-2 py-1.5 text-sm"
                 />
               </label>
-            </div>
+              <div class="flex items-end gap-3">
+                <label class="block text-xs font-medium text-slate-500">
+                  Date column
+                  <input
+                    v-model="statementMapping.date"
+                    class="mt-1 block w-40 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  />
+                </label>
+                <label class="block text-xs font-medium text-slate-500">
+                  Date format
+                  <input
+                    v-model="statementMapping.dateFormat"
+                    class="mt-1 block w-36 rounded border border-slate-300 px-2 py-1.5 text-sm font-mono"
+                  />
+                </label>
+              </div>
+            </template>
             <button
               class="rounded-md bg-wheeler-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-wheeler-purple-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               :disabled="!statementReady"
@@ -312,18 +321,36 @@ const statementMapping = ref({ ...DEFAULT_COLUMN_MAPPING });
 const statementInput = ref<HTMLInputElement | null>(null);
 const statementSummary = ref<StatementImportSummary | null>(null);
 
+const selectedAccount = computed(() =>
+  config.value?.accounts.find(a => a.id === statementAccountId.value)
+);
+const hasImportRules = computed(
+  () => !!selectedAccount.value?.import?.rules?.length
+);
+
 watch(statementAccountId, () => {
   statementSummary.value = null;
   clearError();
+  const imp = selectedAccount.value?.import;
+  if (imp && !imp.rules?.length) {
+    statementMapping.value = {
+      date: imp.dateColumn ?? DEFAULT_COLUMN_MAPPING.date,
+      dateFormat: imp.dateFormat ?? DEFAULT_COLUMN_MAPPING.dateFormat,
+      amount: imp.amountColumn ?? DEFAULT_COLUMN_MAPPING.amount,
+      name: imp.nameColumn ?? DEFAULT_COLUMN_MAPPING.name,
+    };
+  } else {
+    statementMapping.value = { ...DEFAULT_COLUMN_MAPPING };
+  }
 });
 
-// Name may be blank (no name-like column); date and amount are required.
 const statementReady = computed(
   () =>
     statementAccountId.value !== '' &&
-    statementMapping.value.date.trim() !== '' &&
-    statementMapping.value.amount.trim() !== '' &&
-    statementSummary.value === null
+    statementSummary.value === null &&
+    (hasImportRules.value ||
+      (statementMapping.value.date.trim() !== '' &&
+        statementMapping.value.amount.trim() !== ''))
 );
 
 function toggleStatementPanel(): void {
@@ -375,6 +402,56 @@ const FIELD_REFERENCE: Array<{
   values?: string[];
   example?: string;
 }> = [
+  {
+    name: 'accounts[].iban',
+    description:
+      'The account\'s IBAN. Used for cross-account matching in `import.rules` — e.g. match a "Payee Account Number" column against a known own-account IBAN to auto-route transfers. Safe to store: IBANs are receive-only identifiers.',
+  },
+  {
+    name: 'accounts[].import',
+    description:
+      'Per-account CSV import configuration. Set `dateFormat` (date-fns pattern), `dateColumn`, `amountColumn`, `nameColumn` to pre-fill the import UI. Add `rules` for fully automatic column mapping with conditional row shaping. Conditions are matched case-insensitively with whitespace stripped.',
+    example: `// Example: DD-MM-YYYY dates, CONVERSION rows become transfers,
+// known own-account IBAN routes as an internal transfer,
+// everything else is a plain debit on this account.
+{
+  "dateFormat": "dd-MM-yyyy",
+  "rules": [
+    {
+      "when": { "Transaction Details Type": "CONVERSION" },
+      "shape": {
+        "id": "\${TransferWise ID}",
+        "date": "\${Date}",
+        "name": "\${Description}",
+        "amount": "\${Amount}",
+        "toAmount": "\${Exchange To Amount}",
+        "to": "mock-usd-account"
+      }
+    },
+    {
+      "when": {
+        "Transaction Details Type": "TRANSFER",
+        "Payee Account Number": "NL00MOCK0000000000"
+      },
+      "shape": {
+        "id": "\${TransferWise ID}",
+        "date": "\${Date}",
+        "name": "\${Description}",
+        "amount": "\${Amount}",
+        "to": "mock-savings-account"
+      }
+    },
+    {
+      "shape": {
+        "id": "\${TransferWise ID}",
+        "date": "\${Date}",
+        "name": "\${Description}",
+        "amount": "\${Amount}"
+      }
+    }
+  ]
+}`,
+  },
   {
     name: 'accounts[].type',
     description: 'What kind of account this is.',
@@ -478,6 +555,14 @@ const FIELD_REFERENCE: Array<{
   "from": "usd-checking",
   "to": "eur-bills",
   "recurrence": { "frequency": "monthly", "start": "2026-07-04" }
+}`,
+  },
+  {
+    name: 'meta.forecastFrom',
+    description:
+      'Rules only generate occurrences on or after this date (YYYY-MM-DD). Occurrences before it are expected to exist as imported entries, so there is no double-counting. Automatically advances to the day after the latest imported entry date each time you upload a statement. Set it manually to override.',
+    example: `"meta": {
+  "forecastFrom": "2026-07-26"
 }`,
   },
   {

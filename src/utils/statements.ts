@@ -1,4 +1,4 @@
-import type { Entry } from '@/types';
+import type { Account, Entry } from '@/types';
 import { isValid, parse } from 'date-fns';
 import { makeId } from './id';
 
@@ -198,6 +198,125 @@ export function statementToEntries(
     };
     if (existingKeys.has(duplicateKey(entry))) duplicateCount++;
     entries.push(entry);
+  }
+
+  return { entries, duplicateCount, problems };
+}
+
+// ─── Rule-based import ────────────────────────────────────────────────────────
+
+/** Strips whitespace and uppercases for condition matching (handles IBANs, type codes, etc.). */
+function normalizeConditionValue(s: string): string {
+  return s.replace(/\s+/g, '').toUpperCase();
+}
+
+/** Returns true when all `when` conditions match the row, or when `when` is absent (catch-all). */
+function matchesCondition(
+  when: Record<string, string> | undefined,
+  row: Record<string, string>
+): boolean {
+  if (!when) return true;
+  return Object.entries(when).every(
+    ([col, val]) =>
+      normalizeConditionValue(row[col] ?? '') === normalizeConditionValue(val)
+  );
+}
+
+/** Replaces ${ColumnName} tokens with values from the row. */
+function interpolate(template: string, row: Record<string, string>): string {
+  return template.replace(/\$\{([^}]+)\}/g, (_, col: string) => row[col] ?? '');
+}
+
+function applyShape(
+  shape: Record<string, string>,
+  row: Record<string, string>,
+  dateFormat: string,
+  fallbackAccountId: string,
+  rowNum: number
+): { entry: Entry } | { problem: string } {
+  const val = (key: string): string => interpolate(shape[key] ?? '', row);
+
+  const rawDate = val('date');
+  const date = parseStatementDate(rawDate, dateFormat);
+  if (!date) return { problem: `Row ${rowNum}: unreadable date "${rawDate}".` };
+
+  const rawAmount = val('amount');
+  const amount = parseStatementAmount(rawAmount);
+  if (amount === null) return { problem: `Row ${rowNum}: unreadable amount "${rawAmount}".` };
+
+  const to = shape.to ? val('to') : undefined;
+  const name = val('name') || 'Imported transaction';
+  const id = shape.id ? val('id').trim() || makeId(name) : makeId(name);
+  const category = shape.category ? val('category') : undefined;
+
+  let toAmount: number | undefined;
+  if (shape.toAmount) {
+    const parsed = parseStatementAmount(val('toAmount'));
+    if (parsed !== null) toAmount = Math.abs(parsed);
+  }
+
+  const entry: Entry = {
+    id,
+    name,
+    amount,
+    date,
+    ...(category ? { category } : {}),
+    ...(to ? { from: fallbackAccountId, to } : { accountId: fallbackAccountId }),
+    ...(toAmount !== undefined ? { toAmount } : {}),
+  };
+
+  return { entry };
+}
+
+/**
+ * Rule-based import path: each CSV row is matched against the account's
+ * import rules in order; the first matching rule's shape builds the entry.
+ * Falls through to a "no matching rule" problem if none match.
+ */
+export function statementToEntriesWithRules(
+  csvText: string,
+  account: Account,
+  existingEntries: Entry[]
+): StatementImportResult {
+  const importConfig = account.import!;
+  const rows = parseCsv(csvText);
+  if (rows.length < 2) {
+    return {
+      entries: [],
+      duplicateCount: 0,
+      problems: ['The file has no data rows below the header.'],
+    };
+  }
+
+  const headers = rows[0].map(h => h.trim());
+  const toRowObj = (cells: string[]): Record<string, string> =>
+    Object.fromEntries(headers.map((h, i) => [h, cells[i]?.trim() ?? '']));
+
+  const dateFormat = importConfig.dateFormat ?? 'yyyy-MM-dd';
+  const rules = importConfig.rules ?? [];
+  const existingKeys = new Set(existingEntries.map(duplicateKey));
+  const entries: Entry[] = [];
+  const problems: string[] = [];
+  let duplicateCount = 0;
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = toRowObj(rows[i]);
+    const rule = rules.find(r => matchesCondition(r.when, row));
+    if (!rule) {
+      problems.push(`Row ${i + 1}: no matching import rule — skipped.`);
+      continue;
+    }
+
+    if (rule.shape?.skip) continue;
+
+    const result = applyShape(rule.shape!, row, dateFormat, account.id, i + 1);
+    if ('problem' in result) {
+      problems.push(result.problem);
+      continue;
+    }
+
+    if (existingKeys.has(duplicateKey(result.entry))) duplicateCount++;
+    entries.push(result.entry);
   }
 
   return { entries, duplicateCount, problems };

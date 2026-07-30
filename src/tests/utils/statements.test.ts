@@ -1,8 +1,9 @@
-import type { Entry } from '@/types';
+import type { Account, Entry, ImportRule } from '@/types';
 import {
   parseCsv,
   parseStatementAmount,
   statementToEntries,
+  statementToEntriesWithRules,
 } from '@/utils/statements';
 import { describe, expect, it } from 'vitest';
 
@@ -235,3 +236,151 @@ describe('statementToEntries', () => {
   });
 });
 
+// Mirrors a minimal mock of the column layout used by Wise CSV exports.
+const MOCK_WISE_CSV = `"TransferWise ID","Date","Amount","Currency","Description","Payee Account Number","Exchange To Amount","Transaction Details Type"
+"MOCK-001","05-07-2026","-24.99","EUR","Mock Grocery Store","","","CARD_TRANSACTION"
+"MOCK-002","10-07-2026","-500.00","EUR","Converted 500.00 EUR to 567.00 USD (fee: 2.00 EUR)","","567.00","CONVERSION"
+"MOCK-003","15-07-2026","-200.00","EUR","Sent money to Mock Person","NL00MOCK0000000000","","TRANSFER"
+"MOCK-004","20-07-2026","-50.00","EUR","Invoice paid to Mock Vendor","NL99EXTR9999999999","","TRANSFER"
+`;
+
+function mockWiseAccount(extraRules: ImportRule[] = []): Account {
+  return {
+    id: 'mock-eur',
+    name: 'Mock EUR',
+    type: 'checking',
+    anchor: { date: '2026-07-01', balance: 1000 },
+    import: {
+      dateFormat: 'dd-MM-yyyy',
+      rules: [
+        {
+          when: { 'Transaction Details Type': 'CONVERSION' },
+          shape: {
+            id: '${TransferWise ID}',
+            date: '${Date}',
+            name: '${Description}',
+            amount: '${Amount}',
+            toAmount: '${Exchange To Amount}',
+            to: 'mock-usd',
+          },
+        },
+        {
+          when: {
+            'Transaction Details Type': 'TRANSFER',
+            'Payee Account Number': 'NL00MOCK0000000000',
+          },
+          shape: {
+            id: '${TransferWise ID}',
+            date: '${Date}',
+            name: '${Description}',
+            amount: '${Amount}',
+            to: 'mock-savings',
+          },
+        },
+        ...extraRules,
+        {
+          shape: {
+            id: '${TransferWise ID}',
+            date: '${Date}',
+            name: '${Description}',
+            amount: '${Amount}',
+          },
+        },
+      ],
+    },
+  };
+}
+
+describe('statementToEntriesWithRules', () => {
+  it('imports plain rows via the default catch-all rule', () => {
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const grocery = result.entries.find(e => e.id === 'MOCK-001');
+    expect(grocery).toMatchObject({
+      date: '2026-07-05',
+      amount: -24.99,
+      accountId: 'mock-eur',
+    });
+  });
+
+  it('shapes CONVERSION rows as transfers with toAmount', () => {
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const conversion = result.entries.find(e => e.id === 'MOCK-002');
+    expect(conversion).toMatchObject({
+      date: '2026-07-10',
+      amount: -500,
+      from: 'mock-eur',
+      to: 'mock-usd',
+      toAmount: 567,
+    });
+    expect(conversion?.accountId).toBeUndefined();
+  });
+
+  it('routes transfers to a known own-account IBAN as internal transfers', () => {
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const transfer = result.entries.find(e => e.id === 'MOCK-003');
+    expect(transfer).toMatchObject({ from: 'mock-eur', to: 'mock-savings' });
+  });
+
+  it('routes transfers to an unknown external IBAN as plain debits via catch-all', () => {
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const external = result.entries.find(e => e.id === 'MOCK-004');
+    expect(external).toMatchObject({ accountId: 'mock-eur', amount: -50 });
+    expect(external?.from).toBeUndefined();
+  });
+
+  it('normalizes IBAN spacing and case in conditions', () => {
+    const accountWithSpacedIban = mockWiseAccount([
+      {
+        when: {
+          'Transaction Details Type': 'transfer',
+          'Payee Account Number': 'nl00 mock 0000 0000 00',
+        },
+        shape: {
+          id: '${TransferWise ID}',
+          date: '${Date}',
+          name: '${Description}',
+          amount: '${Amount}',
+          from: 'mock-eur',
+          to: 'mock-savings',
+        },
+      },
+    ]);
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, accountWithSpacedIban, []);
+    const transfer = result.entries.find(e => e.id === 'MOCK-003');
+    expect(transfer).toMatchObject({ from: 'mock-eur', to: 'mock-savings' });
+  });
+
+  it('uses the shape id field as-is without slugifying', () => {
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    expect(result.entries.map(e => e.id)).toEqual([
+      'MOCK-001', 'MOCK-002', 'MOCK-003', 'MOCK-004',
+    ]);
+  });
+
+  it('silently drops rows whose matching rule has shape.skip set', () => {
+    const account = mockWiseAccount([
+      {
+        when: { 'Transaction Details Type': 'CARD_TRANSACTION' },
+        shape: { skip: 'Handled by another account' },
+      },
+    ]);
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, account, []);
+    expect(result.entries.find(e => e.id === 'MOCK-001')).toBeUndefined();
+    expect(result.problems).not.toContain(expect.stringContaining('MOCK-001'));
+  });
+
+  it('counts duplicate entries against existing ones', () => {
+    const existing: Entry[] = [
+      {
+        id: 'MOCK-001',
+        name: 'Mock Grocery Store',
+        amount: -24.99,
+        accountId: 'mock-eur',
+        date: '2026-07-05',
+      },
+    ];
+    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), existing);
+    expect(result.duplicateCount).toBe(1);
+    expect(result.entries).toHaveLength(4);
+  });
+});

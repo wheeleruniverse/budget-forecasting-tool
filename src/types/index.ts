@@ -1,6 +1,30 @@
 export type AccountType =
   'checking' | 'savings' | 'credit' | 'cash' | 'investment' | 'other';
 
+/**
+ * One rule in an account's import config. Rows are matched in order;
+ * the first matching rule's shape is used to build the entry.
+ */
+export interface ImportRule {
+  /** Column→value conditions. All must match (whitespace-stripped, uppercased). Absent = catch-all. */
+  when?: Record<string, string>;
+  /** Template for the entry. String values may use ${ColumnName} interpolation. */
+  shape: Record<string, string>;
+}
+
+export interface AccountImportConfig {
+  /** date-fns format string applied to date columns in shapes (default: yyyy-MM-dd). */
+  dateFormat?: string;
+  /** Column name for the date field — used by the simple (no-rules) path. */
+  dateColumn?: string;
+  /** Column name for the amount field — used by the simple (no-rules) path. */
+  amountColumn?: string;
+  /** Column name for the name/description field — used by the simple (no-rules) path. */
+  nameColumn?: string;
+  /** Rule-based import: rows are matched in order, first match wins. */
+  rules?: ImportRule[];
+}
+
 export interface Account {
   id: string;
   name: string;
@@ -14,6 +38,10 @@ export interface Account {
   currency?: string;
   /** Optional hex color used for chart lines and labels. */
   color?: string;
+  /** IBAN for this account — used for cross-account matching in import rules. */
+  iban?: string;
+  /** Per-account CSV import configuration. */
+  import?: AccountImportConfig;
 }
 
 export type Frequency =
@@ -94,6 +122,13 @@ export interface BudgetMeta {
    * fetched — update these by hand when it matters.
    */
   fxRates?: Record<string, number>;
+  /**
+   * Rules only generate occurrences on or after this date (YYYY-MM-DD).
+   * Occurrences before it are expected to exist as imported entries.
+   * Automatically advances to the day after the latest imported entry date.
+   * Omit to generate all rule occurrences (legacy behaviour).
+   */
+  forecastFrom?: string;
   description?: string;
 }
 

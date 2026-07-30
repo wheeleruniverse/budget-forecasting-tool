@@ -388,6 +388,67 @@ describe('buildLedger balances', () => {
     expect(snapshot.balances['checking']).toBe(-0.3);
   });
 
+  it('forecastFrom suppresses rule occurrences before the fence', () => {
+    const config = baseConfig({
+      meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-07-15' },
+      rules: [
+        {
+          id: 'rent',
+          name: 'Rent',
+          amount: -1000,
+          accountId: 'checking',
+          recurrence: {
+            frequency: 'monthly',
+            start: '2026-01-01',
+            dayOfMonth: 1,
+          },
+        },
+      ],
+    });
+    const lines = buildLines(config, '2026-07-01', '2026-08-31');
+    const dates = lines.map(l => l.date);
+    expect(dates).not.toContain('2026-07-01');
+    expect(dates).toContain('2026-08-01');
+  });
+
+  it('forecastFrom does not suppress rules that start after the fence', () => {
+    const config = baseConfig({
+      meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-07-15' },
+      rules: [
+        {
+          id: 'new-sub',
+          name: 'New Subscription',
+          amount: -10,
+          accountId: 'checking',
+          recurrence: { frequency: 'monthly', start: '2026-10-01' },
+        },
+      ],
+    });
+    const lines = buildLines(config, '2026-09-01', '2026-11-30');
+    expect(lines.map(l => l.date)).toContain('2026-10-01');
+  });
+
+  it('forecastFrom omitted generates all rule occurrences as before', () => {
+    const config = baseConfig({
+      rules: [
+        {
+          id: 'bill',
+          name: 'Bill',
+          amount: -50,
+          accountId: 'checking',
+          recurrence: {
+            frequency: 'monthly',
+            start: '2026-07-01',
+            dayOfMonth: 1,
+          },
+        },
+      ],
+    });
+    const lines = buildLines(config, '2026-07-01', '2026-08-31');
+    expect(lines.map(l => l.date)).toContain('2026-07-01');
+    expect(lines.map(l => l.date)).toContain('2026-08-01');
+  });
+
   it('attaches the day lines to each snapshot', () => {
     const config = baseConfig({
       entries: [

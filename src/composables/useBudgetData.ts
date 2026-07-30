@@ -19,6 +19,7 @@ import {
 } from '@/utils/money';
 import {
   statementToEntries,
+  statementToEntriesWithRules,
   type StatementColumnMapping,
 } from '@/utils/statements';
 import { normalizeBudgetConfig, validateBudgetConfig } from '@/utils/validate';
@@ -142,12 +143,16 @@ async function importStatement(
 ): Promise<StatementImportSummary | null> {
   error.value = null;
   try {
-    const result = statementToEntries(
-      await file.text(),
-      accountId,
-      config.value?.entries ?? [],
-      mapping
-    );
+    const text = await file.text();
+    const account = config.value?.accounts.find(a => a.id === accountId);
+    const result = account?.import?.rules?.length
+      ? statementToEntriesWithRules(text, account, config.value?.entries ?? [])
+      : statementToEntries(
+          text,
+          accountId,
+          config.value?.entries ?? [],
+          mapping
+        );
     if (result.entries.length === 0) {
       error.value = {
         message: `"${file.name}" contained no importable rows.`,
@@ -157,6 +162,16 @@ async function importStatement(
     }
     mutate(c => {
       c.entries.push(...result.entries);
+      const latestDate = result.entries.reduce(
+        (max, e) => (e.date > max ? e.date : max),
+        ''
+      );
+      if (
+        latestDate &&
+        (!c.meta.forecastFrom || latestDate >= c.meta.forecastFrom)
+      ) {
+        c.meta.forecastFrom = addDays(latestDate, 1);
+      }
     });
     return {
       imported: result.entries.length,

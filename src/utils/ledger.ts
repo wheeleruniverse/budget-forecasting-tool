@@ -174,7 +174,8 @@ function ruleLines(
   rule: Rule,
   fx: FxContext,
   overrides: RuleOverride[],
-  through: string
+  through: string,
+  forecastFrom?: string
 ): LedgerLine[] {
   const overrideMap = new Map<string, RuleOverride>();
   for (const o of overrides) {
@@ -187,6 +188,7 @@ function ruleLines(
     if (override?.skip) continue;
 
     const date = override?.moveTo ?? originalDate;
+    if (forecastFrom && date < forecastFrom) continue;
     const movement: MoneyMovement = {
       ...rule,
       name: override?.name ?? rule.name,
@@ -225,7 +227,15 @@ export function buildLines(
   }
   const expandThrough = addDays(through, MOVE_PAD_DAYS);
   for (const rule of config.rules) {
-    lines.push(...ruleLines(rule, fx, config.overrides, expandThrough));
+    lines.push(
+      ...ruleLines(
+        rule,
+        fx,
+        config.overrides,
+        expandThrough,
+        config.meta.forecastFrom
+      )
+    );
   }
 
   return lines
