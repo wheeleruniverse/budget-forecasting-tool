@@ -116,6 +116,13 @@ day view or the Manage page.
 The Data dialog's field reference documents `import` and every other field in
 full, with copyable examples.
 
+## Scenarios
+
+The [`scenarios/`](scenarios) directory holds self-contained example datasets —
+fully fictional budget JSON and matching statement CSVs — for exploring the app
+and walking through features like rule-based import. Each scenario has its own
+README explaining how to run it and what it demonstrates.
+
 ## Development
 
 ```bash
