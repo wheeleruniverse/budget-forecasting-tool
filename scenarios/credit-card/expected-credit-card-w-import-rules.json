@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Credit Card w/ Import Rules",
+    "baseCurrency": "USD",
+    "forecastFrom": "2026-07-29"
+  },
+  "accounts": [
+    {
+      "id": "mock-checking-usd",
+      "name": "Mock Checking USD (1122)",
+      "type": "checking",
+      "anchor": {
+        "date": "2026-04-01",
+        "balance": 1500
+      },
+      "currency": "USD"
+    },
+    {
+      "id": "mock-credit-card",
+      "name": "Mock Credit Card (1234)",
+      "type": "credit",
+      "anchor": {
+        "date": "2026-04-01",
+        "balance": 0
+      },
+      "currency": "USD",
+      "import": {
+        "dateFormat": "yyyy-MM-dd",
+        "rules": [
+          {
+            "when": {
+              "Debit": ""
+            },
+            "shape": {
+              "date": "${Posted Date}",
+              "name": "${Description}",
+              "amount": "${Credit}"
+            }
+          },
+          {
+            "shape": {
+              "date": "${Posted Date}",
+              "name": "${Description}",
+              "amount": "-${Debit}"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "cc-payment",
+      "name": "Mock Credit Card Payment",
+      "amount": 210.12,
+      "category": "transfer",
+      "from": "mock-checking-usd",
+      "to": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 24
+      }
+    },
+    {
+      "id": "software-copilot",
+      "name": "GitHub Copilot",
+      "amount": -31.12,
+      "category": "software",
+      "accountId": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 18
+      }
+    },
+    {
+      "id": "software-claude",
+      "name": "Anthropic Claude",
+      "amount": -179,
+      "category": "software",
+      "accountId": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 28
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "sp-anthropic-claude-4ak8",
+      "name": "SP ANTHROPIC CLAUDE",
+      "amount": -179,
+      "date": "2026-07-28",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "ccv-null-pointer-p-ef80",
+      "name": "CCV*Null Pointer P",
+      "amount": -63.25,
+      "date": "2026-07-25",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "ccv-rubber-duck-d-pgu3",
+      "name": "CCV*Rubber Duck D",
+      "amount": -22.85,
+      "date": "2026-07-25",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "tech-debt-charge-purchases-1xng",
+      "name": "TECH DEBT CHARGE:PURCHASES",
+      "amount": -37.83,
+      "date": "2026-07-23",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "leeteats-io-leete-erto",
+      "name": "LeetEats.io LeetE",
+      "amount": -69.48,
+      "date": "2026-07-22",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "github-copilot-us-bkmi",
+      "name": "GITHUB COPILOT US",
+      "amount": -27.33,
+      "date": "2026-07-18",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "docker-pizza-co-seatt-ukkx",
+      "name": "DOCKER PIZZA CO SEATT",
+      "amount": -49.74,
+      "date": "2026-07-16",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "compile-eats-dfs2",
+      "name": "COMPILE   *EATS",
+      "amount": 9.44,
+      "date": "2026-07-16",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "compile-eats-q4dt",
+      "name": "COMPILE   *EATS",
+      "amount": -45.12,
+      "date": "2026-07-16",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "octocat-one-mobile-pymt-mwst",
+      "name": "OCTOCAT ONE MOBILE PYMT",
+      "amount": 332.66,
+      "date": "2026-07-10",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "sp-anthropic-claude-kczd",
+      "name": "SP ANTHROPIC CLAUDE",
+      "amount": -147,
+      "date": "2026-06-29",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "github-copilot-us-578i",
+      "name": "GITHUB COPILOT US",
+      "amount": -27.32,
+      "date": "2026-06-18",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "credit-aws-promo-credit-1f49",
+      "name": "CREDIT-AWS PROMO CREDIT",
+      "amount": 106.84,
+      "date": "2026-06-05",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "aws-emea-0u9b",
+      "name": "AWS EMEA",
+      "amount": -1558.86,
+      "date": "2026-06-05",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "sp-anthropic-claude-ov82",
+      "name": "SP ANTHROPIC CLAUDE",
+      "amount": -179,
+      "date": "2026-05-28",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "github-copilot-us-4a2w",
+      "name": "GITHUB COPILOT US",
+      "amount": -27.32,
+      "date": "2026-05-19",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "octocat-one-mobile-pymt-esah",
+      "name": "OCTOCAT ONE MOBILE PYMT",
+      "amount": 1.5,
+      "date": "2026-05-09",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "tesla-suprchg-u730914500-vygz",
+      "name": "TESLA SUPRCHG U730914500",
+      "amount": -1.5,
+      "date": "2026-05-08",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "octocat-one-mobile-pymt-h1o9",
+      "name": "OCTOCAT ONE MOBILE PYMT",
+      "amount": 805.63,
+      "date": "2026-05-02",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "sp-anthropic-claude-uuxi",
+      "name": "SP ANTHROPIC CLAUDE",
+      "amount": -179,
+      "date": "2026-04-29",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "tesla-suprchg-u730914500-dby3",
+      "name": "TESLA SUPRCHG U730914500",
+      "amount": -9.95,
+      "date": "2026-04-28",
+      "accountId": "mock-credit-card"
+    },
+    {
+      "id": "waymo-rent-a-car-t97u",
+      "name": "WAYMO RENT-A-CAR",
+      "amount": -616.68,
+      "date": "2026-04-20",
+      "accountId": "mock-credit-card"
+    }
+  ],
+  "overrides": []
+}

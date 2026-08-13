@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Credit Card w/ Import Rules",
+    "baseCurrency": "USD"
+  },
+  "accounts": [
+    {
+      "id": "mock-checking-usd",
+      "name": "Mock Checking USD (1122)",
+      "type": "checking",
+      "anchor": {
+        "date": "2026-04-01",
+        "balance": 1500.0
+      },
+      "currency": "USD"
+    },
+    {
+      "id": "mock-credit-card",
+      "name": "Mock Credit Card (1234)",
+      "type": "credit",
+      "anchor": {
+        "date": "2026-04-01",
+        "balance": 0.0
+      },
+      "currency": "USD",
+      "import": {
+        "dateFormat": "yyyy-MM-dd",
+        "rules": [
+          {
+            "when": {
+              "Debit": ""
+            },
+            "shape": {
+              "date": "${Posted Date}",
+              "name": "${Description}",
+              "amount": "${Credit}"
+            }
+          },
+          {
+            "shape": {
+              "date": "${Posted Date}",
+              "name": "${Description}",
+              "amount": "-${Debit}"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "cc-payment",
+      "name": "Mock Credit Card Payment",
+      "amount": 210.12,
+      "category": "transfer",
+      "from": "mock-checking-usd",
+      "to": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 24
+      }
+    },
+    {
+      "id": "software-copilot",
+      "name": "GitHub Copilot",
+      "amount": -31.12,
+      "category": "software",
+      "accountId": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 18
+      }
+    },
+    {
+      "id": "software-claude",
+      "name": "Anthropic Claude",
+      "amount": -179,
+      "category": "software",
+      "accountId": "mock-credit-card",
+      "recurrence": {
+        "frequency": "monthly",
+        "start": "2026-04-20",
+        "dayOfMonth": 28
+      }
+    }
+  ],
+  "entries": [],
+  "overrides": []
+}
