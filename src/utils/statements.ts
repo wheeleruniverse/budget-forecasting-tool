@@ -242,7 +242,8 @@ function applyShape(
 
   const rawAmount = val('amount');
   const amount = parseStatementAmount(rawAmount);
-  if (amount === null) return { problem: `Row ${rowNum}: unreadable amount "${rawAmount}".` };
+  if (amount === null)
+    return { problem: `Row ${rowNum}: unreadable amount "${rawAmount}".` };
 
   const to = shape.to ? val('to') : undefined;
   const name = val('name') || 'Imported transaction';
@@ -261,7 +262,9 @@ function applyShape(
     amount,
     date,
     ...(category ? { category } : {}),
-    ...(to ? { from: fallbackAccountId, to } : { accountId: fallbackAccountId }),
+    ...(to
+      ? { from: fallbackAccountId, to }
+      : { accountId: fallbackAccountId }),
     ...(toAmount !== undefined ? { toAmount } : {}),
   };
 

@@ -29,7 +29,7 @@
           v-if="source === 'sample'"
           class="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800"
         >
-          Sample data
+          Sample Data
         </span>
         <span
           v-else

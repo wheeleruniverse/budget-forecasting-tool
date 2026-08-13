@@ -9,12 +9,24 @@
         Your data never leaves your browser — no API calls, no storage, no
         tracking. Export before you close the tab.
       </p>
+      <p class="mt-1 text-center text-xs text-slate-400">
+        © 2026 Wheeler Universe ·
+        <a
+          class="underline hover:text-slate-600"
+          href="https://github.com/wheeleruniverse/budget-forecasting-tool/blob/main/LICENSE"
+          target="_blank"
+          rel="noopener noreferrer"
+          >MIT License</a
+        >
+      </p>
     </footer>
     <SmallScreenNotice />
+    <DisclaimerModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from '@/components/AppHeader.vue';
+import DisclaimerModal from '@/components/DisclaimerModal.vue';
 import SmallScreenNotice from '@/components/SmallScreenNotice.vue';
 </script>

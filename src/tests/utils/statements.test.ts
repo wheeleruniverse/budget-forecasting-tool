@@ -293,7 +293,11 @@ function mockWiseAccount(extraRules: ImportRule[] = []): Account {
 
 describe('statementToEntriesWithRules', () => {
   it('imports plain rows via the default catch-all rule', () => {
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      []
+    );
     const grocery = result.entries.find(e => e.id === 'MOCK-001');
     expect(grocery).toMatchObject({
       date: '2026-07-05',
@@ -303,7 +307,11 @@ describe('statementToEntriesWithRules', () => {
   });
 
   it('shapes CONVERSION rows as transfers with toAmount', () => {
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      []
+    );
     const conversion = result.entries.find(e => e.id === 'MOCK-002');
     expect(conversion).toMatchObject({
       date: '2026-07-10',
@@ -316,13 +324,21 @@ describe('statementToEntriesWithRules', () => {
   });
 
   it('routes transfers to a known own-account IBAN as internal transfers', () => {
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      []
+    );
     const transfer = result.entries.find(e => e.id === 'MOCK-003');
     expect(transfer).toMatchObject({ from: 'mock-eur', to: 'mock-savings' });
   });
 
   it('routes transfers to an unknown external IBAN as plain debits via catch-all', () => {
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      []
+    );
     const external = result.entries.find(e => e.id === 'MOCK-004');
     expect(external).toMatchObject({ accountId: 'mock-eur', amount: -50 });
     expect(external?.from).toBeUndefined();
@@ -345,15 +361,26 @@ describe('statementToEntriesWithRules', () => {
         },
       },
     ]);
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, accountWithSpacedIban, []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      accountWithSpacedIban,
+      []
+    );
     const transfer = result.entries.find(e => e.id === 'MOCK-003');
     expect(transfer).toMatchObject({ from: 'mock-eur', to: 'mock-savings' });
   });
 
   it('uses the shape id field as-is without slugifying', () => {
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), []);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      []
+    );
     expect(result.entries.map(e => e.id)).toEqual([
-      'MOCK-001', 'MOCK-002', 'MOCK-003', 'MOCK-004',
+      'MOCK-001',
+      'MOCK-002',
+      'MOCK-003',
+      'MOCK-004',
     ]);
   });
 
@@ -379,7 +406,11 @@ describe('statementToEntriesWithRules', () => {
         date: '2026-07-05',
       },
     ];
-    const result = statementToEntriesWithRules(MOCK_WISE_CSV, mockWiseAccount(), existing);
+    const result = statementToEntriesWithRules(
+      MOCK_WISE_CSV,
+      mockWiseAccount(),
+      existing
+    );
     expect(result.duplicateCount).toBe(1);
     expect(result.entries).toHaveLength(4);
   });

@@ -7,7 +7,7 @@
       <div
         class="flex items-center justify-between border-b border-slate-200 px-6 py-4"
       >
-        <h2 class="text-lg font-bold text-slate-900">Your data</h2>
+        <h2 class="text-lg font-bold text-slate-900">Your Data</h2>
         <button
           class="text-2xl leading-none text-slate-400 hover:text-slate-600"
           aria-label="Close"

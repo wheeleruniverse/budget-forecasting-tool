@@ -147,7 +147,12 @@ describe('validateBudgetConfig', () => {
     const errors = validateBudgetConfig({
       ...valid,
       overrides: [
-        { ruleId: 'rent', date: '2026-08-01', amount: -1050, moveTo: '2026-08-03' },
+        {
+          ruleId: 'rent',
+          date: '2026-08-01',
+          amount: -1050,
+          moveTo: '2026-08-03',
+        },
       ],
     });
     expect(errors).toEqual([]);
