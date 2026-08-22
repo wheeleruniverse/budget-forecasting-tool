@@ -90,8 +90,11 @@ is money out. Transfers use a positive amount with `from`/`to` instead of
 
 ## Importing Bank Statements
 
-The **Data** dialog's **Upload statement** panel imports a bank CSV export as
-**one-time entries** on a single account. There are two ways to map columns:
+The **Data** dialog's **Upload statement** panel imports bank CSV exports as
+**one-time entries** on a single account. Select as many files as you like in
+one go — they are imported in order against the same account and column
+mapping, and each file is applied before the next is read, so duplicate
+detection covers the whole batch. There are two ways to map columns:
 
 - **Manual mapping** — tell it which columns hold the date, amount, and
   (optional) name, plus a [date-fns](https://date-fns.org/docs/format) format
@@ -105,13 +108,14 @@ The **Data** dialog's **Upload statement** panel imports a bank CSV export as
   (`from`/`to`/`toAmount`) — for example, routing an internal transfer by
   matching a payee column against a known account `iban`.
 
-Importing never double-counts against your recurring rules: each import
+Importing never double-counts against your recurring rules: each imported file
 advances `meta.forecastFrom` to the day after the latest imported entry, and
 rules only generate occurrences **on or after** that date. Occurrences before
 it are expected to already exist as imported entries. Every row is added, so
 overlapping statements can create duplicates (same account, date, amount, and
 name); the importer flags them and you can delete the extras from the ledger
-day view or the Manage page.
+day view or the Manage page. If one file in a batch yields nothing, the rest
+still import and the summary names the one that came up empty.
 
 The Data dialog's field reference documents `import` and every other field in
 full, with copyable examples.

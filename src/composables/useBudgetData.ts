@@ -29,6 +29,10 @@ export interface StatementImportSummary {
   imported: number;
   duplicates: number;
   problems: string[];
+  /** How many of the selected files contributed at least one entry. */
+  files: number;
+  /** Files that produced nothing, one message each. */
+  failures: string[];
 }
 
 const TEMPLATE_PATH = '/budget-template.json';
@@ -132,59 +136,96 @@ async function importFile(file: File): Promise<boolean> {
 }
 
 /**
- * Imports a bank statement CSV as one-time entries on the chosen account.
- * Every readable row is added — duplicates included — and the summary
- * reports how many look like duplicates so the user can delete them.
+ * Imports one or more bank statement CSVs as one-time entries on the chosen
+ * account. Files are applied in order and each one lands in `config` before
+ * the next is parsed, so duplicate detection spans the whole batch rather
+ * than looking at each file in isolation. Every readable row is added —
+ * duplicates included — and the summary reports how many look like
+ * duplicates so the user can delete them.
+ *
+ * A file that yields nothing is recorded in `failures` and the rest still
+ * import; only a batch that imports nothing at all is treated as an error.
  */
-async function importStatement(
-  file: File,
+async function importStatements(
+  files: File[],
   accountId: string,
   mapping: StatementColumnMapping
 ): Promise<StatementImportSummary | null> {
   error.value = null;
-  try {
-    const text = await file.text();
-    const account = config.value?.accounts.find(a => a.id === accountId);
-    const result = account?.import?.rules?.length
-      ? statementToEntriesWithRules(text, account, config.value?.entries ?? [])
-      : statementToEntries(
-          text,
-          accountId,
-          config.value?.entries ?? [],
-          mapping
-        );
-    if (result.entries.length === 0) {
-      error.value = {
-        message: `"${file.name}" contained no importable rows.`,
-        details: result.problems,
-      };
-      return null;
-    }
-    mutate(c => {
-      c.entries.push(...result.entries);
-      const latestDate = result.entries.reduce(
-        (max, e) => (e.date > max ? e.date : max),
-        ''
-      );
-      if (
-        latestDate &&
-        (!c.meta.forecastFrom || latestDate >= c.meta.forecastFrom)
-      ) {
-        c.meta.forecastFrom = addDays(latestDate, 1);
+  if (files.length === 0) return null;
+
+  const summary: StatementImportSummary = {
+    imported: 0,
+    duplicates: 0,
+    problems: [],
+    files: 0,
+    failures: [],
+  };
+  // Row-level problems are ambiguous once several files are in play.
+  const label = (problems: string[], name: string): string[] =>
+    files.length > 1
+      ? problems.map(problem => `${name}: ${problem}`)
+      : problems;
+
+  for (const file of files) {
+    try {
+      const text = await file.text();
+      const account = config.value?.accounts.find(a => a.id === accountId);
+      const result = account?.import?.rules?.length
+        ? statementToEntriesWithRules(
+            text,
+            account,
+            config.value?.entries ?? []
+          )
+        : statementToEntries(
+            text,
+            accountId,
+            config.value?.entries ?? [],
+            mapping
+          );
+      summary.problems.push(...label(result.problems, file.name));
+      if (result.entries.length === 0) {
+        summary.failures.push(`"${file.name}" contained no importable rows.`);
+        continue;
       }
-    });
-    return {
-      imported: result.entries.length,
-      duplicates: result.duplicateCount,
-      problems: result.problems,
-    };
-  } catch (err) {
+      mutate(c => {
+        c.entries.push(...result.entries);
+        const latestDate = result.entries.reduce(
+          (max, e) => (e.date > max ? e.date : max),
+          ''
+        );
+        if (
+          latestDate &&
+          (!c.meta.forecastFrom || latestDate >= c.meta.forecastFrom)
+        ) {
+          c.meta.forecastFrom = addDays(latestDate, 1);
+        }
+      });
+      summary.files++;
+      summary.imported += result.entries.length;
+      summary.duplicates += result.duplicateCount;
+    } catch (err) {
+      summary.failures.push(
+        `Could not read "${file.name}" — ${
+          err instanceof Error ? err.message : 'unknown error'
+        }.`
+      );
+    }
+  }
+
+  if (summary.imported === 0) {
+    const single = files.length === 1;
     error.value = {
-      message: `Could not read "${file.name}".`,
-      details: err,
+      message: single
+        ? summary.failures[0]
+        : `None of the ${files.length} selected files contained importable rows.`,
+      details: single
+        ? summary.problems
+        : [...summary.failures, ...summary.problems],
     };
     return null;
   }
+  return summary;
 }
 
 function downloadJson(data: unknown, name: string): void {
@@ -508,7 +549,7 @@ export function useBudgetData() {
     canShrinkForward,
     loadSample,
     importFile,
-    importStatement,
+    importStatements,
     exportConfig,
     downloadTemplate,
     clearError,

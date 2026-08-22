@@ -103,13 +103,14 @@
           class="rounded-md border border-slate-200 bg-slate-50 p-4"
         >
           <p class="text-sm text-slate-600">
-            Import a bank statement CSV export as
-            <strong>one-time entries</strong> on a single account. Tell it what
-            the name, amount, and date columns are called in
-            <em>your file's</em> header row (capitalization doesn't matter;
-            leave Name blank if there is no name-like column). Every other
-            column is ignored. Every row is added — uploading overlapping
-            statements creates duplicates, which you can delete from the ledger
+            Import bank statement CSV exports as
+            <strong>one-time entries</strong> on a single account. You can
+            select several files at once — they are imported in the order the
+            browser lists them. Tell it what the name, amount, and date columns
+            are called in <em>your files'</em> header row (capitalization
+            doesn't matter; leave Name blank if there is no name-like column).
+            Every other column is ignored. Every row is added — overlapping
+            statements create duplicates, which you can delete from the ledger
             or the Manage page.
           </p>
           <div class="mt-3 space-y-3">
@@ -174,12 +175,13 @@
               :disabled="!statementReady"
               @click="statementInput?.click()"
             >
-              Choose CSV
+              Choose CSV files
             </button>
             <input
               ref="statementInput"
               type="file"
               accept=".csv,text/csv"
+              multiple
               class="hidden"
               @change="onStatementSelected"
             />
@@ -188,6 +190,9 @@
             <p class="font-semibold text-emerald-700">
               Imported {{ statementSummary.imported }}
               {{ statementSummary.imported === 1 ? 'entry' : 'entries' }}
+              <template v-if="statementSummary.files > 1">
+                from {{ statementSummary.files }} files
+              </template>
               into {{ accountName(statementAccountId) }}.
             </p>
             <p
@@ -200,6 +205,14 @@
               Manage page.
             </p>
             <ul
+              v-if="statementSummary.failures.length"
+              class="list-inside list-disc text-xs text-red-700"
+            >
+              <li v-for="failure in statementSummary.failures" :key="failure">
+                {{ failure }}
+              </li>
+            </ul>
+            <ul
               v-if="statementSummary.problems.length"
               class="list-inside list-disc text-xs text-slate-500"
             >
@@ -207,6 +220,12 @@
                 Skipped — {{ problem }}
               </li>
             </ul>
+            <button
+              class="text-xs font-semibold text-wheeler-purple-700 underline hover:text-wheeler-purple-800"
+              @click="statementSummary = null"
+            >
+              Import more files
+            </button>
           </div>
         </section>
 
@@ -303,7 +322,7 @@ const {
   dirty,
   error,
   importFile,
-  importStatement,
+  importStatements,
   exportConfig,
   downloadTemplate,
   clearError,
@@ -366,10 +385,10 @@ function accountName(accountId: string): string {
 
 async function onStatementSelected(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (file && statementReady.value) {
-    statementSummary.value = await importStatement(
-      file,
+  const files = Array.from(input.files ?? []);
+  if (files.length > 0 && statementReady.value) {
+    statementSummary.value = await importStatements(
+      files,
       statementAccountId.value,
       statementMapping.value
     );
