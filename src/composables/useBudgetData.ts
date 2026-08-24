@@ -367,6 +367,28 @@ function upsertEntry(entry: Entry): void {
   });
 }
 
+/**
+ * Sets one category across many entries at once. Passing a blank category
+ * clears the field instead, so a mis-tag can be undone the same way it was
+ * made. Returns how many entries changed.
+ */
+function assignCategory(entryIds: string[], category: string): number {
+  if (entryIds.length === 0) return 0;
+  const ids = new Set(entryIds);
+  const trimmed = category.trim().replace(/\s+/g, ' ');
+  let updated = 0;
+
+  mutate(c => {
+    for (const entry of c.entries) {
+      if (!ids.has(entry.id)) continue;
+      if (trimmed) entry.category = trimmed;
+      else delete entry.category;
+      updated++;
+    }
+  });
+  return updated;
+}
+
 function removeEntry(entryId: string): void {
   mutate(c => {
     c.entries = c.entries.filter(e => e.id !== entryId);
@@ -564,6 +586,7 @@ export function useBudgetData() {
     removeRule,
     upsertEntry,
     removeEntry,
+    assignCategory,
     setOverride,
     removeOverride,
   };

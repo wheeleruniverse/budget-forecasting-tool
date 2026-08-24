@@ -11,6 +11,14 @@ export const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/categories',
+    name: 'Categories',
+    component: () => import('@/views/CategoriesView.vue'),
+    meta: {
+      title: 'Categories | Budget Forecast',
+    },
+  },
+  {
     path: '/manage',
     name: 'Manage',
     component: () => import('@/views/ManageView.vue'),

@@ -87,6 +87,47 @@ is money out. Transfers use a positive amount with `from`/`to` instead of
   jump anywhere with the focus date picker.
 - **Manage** — edit accounts, rules, and entries in the app instead of editing
   JSON by hand. Remember to export afterwards.
+- **Categories** — see recorded spending binned by category for one account.
+
+## Categories
+
+The **Categories** tab bins one account's recorded spending by its `category`
+field, so you can see where the money actually went.
+
+- **Recorded spending only.** Rule-generated occurrences are a forecast, not
+  history, so they are excluded — this tab answers "where did it go", while the
+  Ledger answers "where will it go".
+- **Transfers are excluded.** A movement between two of your own accounts is
+  not spending, and its category is copied onto both legs, so counting it would
+  net roughly zero while inflating the line count.
+- **One account at a time**, over a 1/3/6/12-month trailing range. Amounts stay
+  in the account's own currency — nothing is FX-converted here.
+- **Category matching is forgiving.** `Food`, `food ` and `FOOD` bin together;
+  the first spelling seen becomes the label.
+- **Untagged spending is grouped by entry name.** Some statements carry no
+  category at all, so untagged entries bin by name instead — repeated merchants
+  collapse into one row tagged **by name**. These are provisional groupings,
+  not categories you set, and the **Untagged** headline keeps reporting the
+  whole gap regardless of how it is split up. Untick **Group untagged spending
+  by name** to see it as a single lump.
+- **Bulk retagging, one bin or many.** Tick the checkbox on several rows and
+  the bulk bar tags all of them in one go — the usual case, because banks split
+  a single merchant across store numbers (`Albert Heijn 1503`, `Albert Heijn
+  2207`, …) and every one of those is its own bin. **Assign** on a single row
+  still opens that bin's entries individually when you need to untick one.
+  **Clear category instead** reverses a mis-tag. Changes are in-memory like
+  every other edit — export to keep them.
+- **Sort by name to find the groups.** The **Bin** and **Spent** column headers
+  both sort. Name sorting is case- and number-aware, so `KRUIDVAT 6214` and
+  `Kruidvat 1384` land next to each other, ready to select together. The ranked
+  chart always stays ordered by amount regardless of the table's sort.
+
+If an account's CSV *does* carry a category column, adding
+`"category": "${Category}"` to its `import.rules` shapes tags future imports
+automatically and skips the manual pass entirely.
+
+Charts are Chart.js and load only when you open the tab. Every plotted value is
+also in the table below, so nothing is reachable by hover alone.
 
 ## Importing Bank Statements
 

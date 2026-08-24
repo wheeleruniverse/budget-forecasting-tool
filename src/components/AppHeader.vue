@@ -91,6 +91,7 @@ const { source, fileName, dirty, error, clearError } = useBudgetData();
 
 const links = [
   { to: '/', label: 'Ledger' },
+  { to: '/categories', label: 'Categories' },
   { to: '/manage', label: 'Manage' },
 ];
 
