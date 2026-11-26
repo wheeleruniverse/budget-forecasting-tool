@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 function baseConfig(overrides: Partial<BudgetConfig> = {}): BudgetConfig {
   return {
     version: 1,
-    meta: { name: 'Test', currency: 'USD' },
+    meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-01-01' },
     accounts: [
       {
         id: 'checking',
@@ -195,7 +195,12 @@ describe('buildLines', () => {
 describe('multi-currency', () => {
   function fxConfig(overrides: Partial<BudgetConfig> = {}): BudgetConfig {
     return baseConfig({
-      meta: { name: 'FX', baseCurrency: 'EUR', fxRates: { USD: 0.92 } },
+      meta: {
+        name: 'FX',
+        baseCurrency: 'EUR',
+        fxRates: { USD: 0.92 },
+        forecastFrom: '2026-01-01',
+      },
       accounts: [
         {
           id: 'nl-bills',
@@ -428,25 +433,70 @@ describe('buildLedger balances', () => {
     expect(lines.map(l => l.date)).toContain('2026-10-01');
   });
 
-  it('forecastFrom omitted generates all rule occurrences as before', () => {
+  it('monthly rule without start runs from forecastFrom on dayOfMonth', () => {
     const config = baseConfig({
+      meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-11-25' },
       rules: [
         {
-          id: 'bill',
-          name: 'Bill',
-          amount: -50,
+          id: 'rent',
+          name: 'Rent',
+          amount: -1000,
           accountId: 'checking',
-          recurrence: {
-            frequency: 'monthly',
-            start: '2026-07-01',
-            dayOfMonth: 1,
-          },
+          recurrence: { frequency: 'monthly', dayOfMonth: 26 },
         },
       ],
     });
-    const lines = buildLines(config, '2026-07-01', '2026-08-31');
-    expect(lines.map(l => l.date)).toContain('2026-07-01');
-    expect(lines.map(l => l.date)).toContain('2026-08-01');
+    const lines = buildLines(config, '2026-11-01', '2027-01-31');
+    expect(lines.map(l => l.date)).toEqual([
+      '2026-11-26',
+      '2026-12-26',
+      '2027-01-26',
+    ]);
+  });
+
+  it('rule without start keeps its schedule when forecastFrom advances', () => {
+    const rule = {
+      id: 'rent',
+      name: 'Rent',
+      amount: -1000,
+      accountId: 'checking',
+      recurrence: { frequency: 'monthly' as const, dayOfMonth: 26 },
+    };
+    const before = buildLines(
+      baseConfig({
+        meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-11-25' },
+        rules: [rule],
+      }),
+      '2026-12-01',
+      '2027-02-28'
+    );
+    const after = buildLines(
+      baseConfig({
+        meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-12-03' },
+        rules: [rule],
+      }),
+      '2026-12-01',
+      '2027-02-28'
+    );
+    expect(after.map(l => l.date)).toEqual(before.map(l => l.date));
+  });
+
+  it('rule without start keeps an occurrence moved across the fence', () => {
+    const config = baseConfig({
+      meta: { name: 'Test', currency: 'USD', forecastFrom: '2026-11-28' },
+      rules: [
+        {
+          id: 'rent',
+          name: 'Rent',
+          amount: -1000,
+          accountId: 'checking',
+          recurrence: { frequency: 'monthly', dayOfMonth: 26 },
+        },
+      ],
+      overrides: [{ ruleId: 'rent', date: '2026-11-26', moveTo: '2026-12-02' }],
+    });
+    const lines = buildLines(config, '2026-11-01', '2026-12-31');
+    expect(lines.map(l => l.date)).toEqual(['2026-12-02', '2026-12-26']);
   });
 
   it('attaches the day lines to each snapshot', () => {

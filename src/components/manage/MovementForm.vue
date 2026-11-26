@@ -115,11 +115,11 @@
         </select>
       </label>
       <label class="block text-xs font-medium text-slate-500">
-        First occurrence
+        First occurrence{{ startRequired ? '' : ' (optional)' }}
         <input
           v-model="model.start"
           type="date"
-          required
+          :required="startRequired"
           class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
         />
       </label>
@@ -176,7 +176,8 @@
 <script lang="ts">
 import type { Frequency, MoneyMovement, Recurrence } from '@/types';
 import { today } from '@/utils/dates';
-import { isTransfer } from '@/utils/ledger';
+import { isTransfer, recurrenceNeedsStart } from '@/utils/ledger';
+import { computed } from 'vue';
 
 export interface MovementFormModel {
   id: string;
@@ -238,7 +239,7 @@ export function movementToForm(
     toAmount: movement.toAmount ?? '',
     date: date ?? today(),
     frequency: recurrence?.frequency ?? 'monthly',
-    start: recurrence?.start ?? today(),
+    start: recurrence ? (recurrence.start ?? '') : today(),
     end: recurrence?.end ?? '',
     dayOfMonth: recurrence?.dayOfMonth?.toString() ?? '',
     daysText: recurrence?.days?.join(', ') ?? '',
@@ -310,6 +311,13 @@ defineProps<{
 }>();
 
 const model = defineModel<MovementFormModel>({ required: true });
+
+const startRequired = computed(() =>
+  recurrenceNeedsStart(
+    model.value.frequency,
+    parseDayOfMonth(model.value.dayOfMonth)
+  )
+);
 
 const emit = defineEmits<{
   save: [];

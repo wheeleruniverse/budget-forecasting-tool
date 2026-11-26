@@ -13,7 +13,11 @@ import { describe, expect, it } from 'vitest';
 function configWith(entries: Entry[], rules: Rule[] = []): BudgetConfig {
   return {
     version: 1,
-    meta: { name: 'Category Test', baseCurrency: 'USD' },
+    meta: {
+      name: 'Category Test',
+      baseCurrency: 'USD',
+      forecastFrom: '2026-01-01',
+    },
     accounts: [
       {
         id: 'card',

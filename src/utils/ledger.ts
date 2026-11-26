@@ -3,6 +3,7 @@ import type {
   BudgetMeta,
   DaySnapshot,
   Entry,
+  Frequency,
   LedgerLine,
   MoneyMovement,
   Recurrence,
@@ -34,12 +35,39 @@ const MAX_OCCURRENCES = 5000;
  */
 const MOVE_PAD_DAYS = 366;
 
+/**
+ * Whether a recurrence needs an explicit `start`: true when the start date
+ * anchors the cycle (weekday, month or day), not just the first occurrence.
+ */
+export function recurrenceNeedsStart(
+  frequency: Frequency,
+  dayOfMonth?: number | 'last'
+): boolean {
+  if (frequency === 'daily' || frequency === 'semimonthly') return false;
+  return frequency !== 'monthly' || dayOfMonth == null;
+}
+
+/**
+ * The date a recurrence expands from. Without a `start` the rule is treated
+ * as already running, so it expands from a year before `forecastFrom`; that
+ * keeps recent overrides (and moveTo across the fence) matching.
+ */
+export function resolveStart(
+  recurrence: Recurrence,
+  forecastFrom: string
+): string {
+  return recurrence.start ?? addDays(forecastFrom, -MOVE_PAD_DAYS);
+}
+
 /** All original occurrence dates of a recurrence, from start through `through`. */
 export function expandOccurrences(
   recurrence: Recurrence,
-  through: string
+  through: string,
+  forecastFrom = ''
 ): string[] {
-  const { frequency, start, end } = recurrence;
+  const { frequency, end } = recurrence;
+  if (!recurrence.start && !forecastFrom) return [];
+  const start = resolveStart(recurrence, forecastFrom);
   const last = end && end < through ? end : through;
   if (start > last) return [];
 
@@ -175,7 +203,7 @@ function ruleLines(
   fx: FxContext,
   overrides: RuleOverride[],
   through: string,
-  forecastFrom?: string
+  forecastFrom: string
 ): LedgerLine[] {
   const overrideMap = new Map<string, RuleOverride>();
   for (const o of overrides) {
@@ -183,12 +211,16 @@ function ruleLines(
   }
 
   const lines: LedgerLine[] = [];
-  for (const originalDate of expandOccurrences(rule.recurrence, through)) {
+  for (const originalDate of expandOccurrences(
+    rule.recurrence,
+    through,
+    forecastFrom
+  )) {
     const override = overrideMap.get(originalDate);
     if (override?.skip) continue;
 
     const date = override?.moveTo ?? originalDate;
-    if (forecastFrom && date < forecastFrom) continue;
+    if (date < forecastFrom) continue;
     const movement: MoneyMovement = {
       ...rule,
       name: override?.name ?? rule.name,

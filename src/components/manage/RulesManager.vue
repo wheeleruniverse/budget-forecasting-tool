@@ -138,7 +138,7 @@ function describeSchedule(rule: Rule): string {
   } else if (r.dayOfMonth) {
     schedule += ` (day ${r.dayOfMonth})`;
   }
-  schedule += ` from ${r.start}`;
+  if (r.start) schedule += ` from ${r.start}`;
   if (r.end) schedule += ` to ${r.end}`;
   return schedule;
 }
@@ -159,7 +159,7 @@ function save(): void {
     ...movement,
     recurrence: {
       frequency: form.value.frequency,
-      start: form.value.start,
+      start: form.value.start || undefined,
       end: form.value.end || undefined,
       dayOfMonth: parseDayOfMonth(form.value.dayOfMonth),
       days:

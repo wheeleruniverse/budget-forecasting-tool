@@ -1,5 +1,8 @@
 import type { BudgetMeta } from '@/types';
 
+/** The meta fields currency helpers read. */
+type CurrencyMeta = Pick<BudgetMeta, 'baseCurrency' | 'currency' | 'fxRates'>;
+
 /**
  * Money helpers. Config JSON stores human-friendly dollar amounts; all
  * arithmetic happens in integer cents to avoid floating point drift.
@@ -21,19 +24,19 @@ export function createMoneyFormatter(currency = 'USD'): (n: number) => string {
   return (n: number) => formatter.format(n);
 }
 
-export function resolveBaseCurrency(meta: BudgetMeta): string {
+export function resolveBaseCurrency(meta: CurrencyMeta): string {
   return meta.baseCurrency ?? meta.currency ?? 'USD';
 }
 
 /** Units of base currency per 1 unit of the given currency. */
-export function fxRate(meta: BudgetMeta, currency: string): number {
+export function fxRate(meta: CurrencyMeta, currency: string): number {
   if (currency === resolveBaseCurrency(meta)) return 1;
   return meta.fxRates?.[currency] ?? 1;
 }
 
 /** Converts between currencies through the base, rounded to cents. */
 export function convertAmount(
-  meta: BudgetMeta,
+  meta: CurrencyMeta,
   amount: number,
   from: string,
   to: string

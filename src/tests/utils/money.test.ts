@@ -10,8 +10,8 @@ const meta = {
 describe('resolveBaseCurrency', () => {
   it('prefers baseCurrency, falls back to legacy currency, then USD', () => {
     expect(resolveBaseCurrency(meta)).toBe('EUR');
-    expect(resolveBaseCurrency({ name: 'x', currency: 'GBP' })).toBe('GBP');
-    expect(resolveBaseCurrency({ name: 'x' })).toBe('USD');
+    expect(resolveBaseCurrency({ currency: 'GBP' })).toBe('GBP');
+    expect(resolveBaseCurrency({})).toBe('USD');
   });
 });
 

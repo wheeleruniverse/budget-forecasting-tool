@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const valid = {
   version: 1,
-  meta: { name: 'Test' },
+  meta: { name: 'Test', forecastFrom: '2026-07-01' },
   accounts: [
     {
       id: 'checking',
@@ -85,7 +85,7 @@ describe('validateBudgetConfig', () => {
   it('flags invalid currency codes and fx rates', () => {
     const errors = validateBudgetConfig({
       ...valid,
-      meta: { name: 'Test', baseCurrency: 'EURO', fxRates: { usd: -1 } },
+      meta: { ...valid.meta, baseCurrency: 'EURO', fxRates: { usd: -1 } },
     });
     expect(errors.join(' ')).toContain('baseCurrency');
     expect(errors.join(' ')).toContain('not a 3-letter ISO code');
@@ -107,7 +107,7 @@ describe('validateBudgetConfig', () => {
     };
     const bad = validateBudgetConfig({
       ...valid,
-      meta: { name: 'Test', baseCurrency: 'EUR' },
+      meta: { ...valid.meta, baseCurrency: 'EUR' },
       accounts,
       rules: [],
       entries: [transfer],
@@ -116,7 +116,7 @@ describe('validateBudgetConfig', () => {
 
     const withToAmount = validateBudgetConfig({
       ...valid,
-      meta: { name: 'Test', baseCurrency: 'EUR' },
+      meta: { ...valid.meta, baseCurrency: 'EUR' },
       accounts,
       rules: [],
       entries: [{ ...transfer, toAmount: 92 }],
@@ -125,7 +125,7 @@ describe('validateBudgetConfig', () => {
 
     const withRates = validateBudgetConfig({
       ...valid,
-      meta: { name: 'Test', baseCurrency: 'EUR', fxRates: { USD: 0.92 } },
+      meta: { ...valid.meta, baseCurrency: 'EUR', fxRates: { USD: 0.92 } },
       accounts,
       rules: [],
       entries: [transfer],
@@ -164,5 +164,54 @@ describe('validateBudgetConfig', () => {
       overrides: [{ ruleId: 'ghost', date: '2026-07-01', skip: true }],
     });
     expect(errors.join(' ')).toContain('unknown rule "ghost"');
+  });
+
+  it('requires meta.forecastFrom', () => {
+    const errors = validateBudgetConfig({ ...valid, meta: { name: 'Test' } });
+    expect(errors.join(' ')).toContain('meta.forecastFrom');
+  });
+
+  it('allows omitting start where it does not anchor the cycle', () => {
+    const rule = valid.rules[0];
+    for (const recurrence of [
+      { frequency: 'monthly', dayOfMonth: 26 },
+      { frequency: 'semimonthly', days: [1, 15] },
+      { frequency: 'daily' },
+    ]) {
+      expect(
+        validateBudgetConfig({ ...valid, rules: [{ ...rule, recurrence }] })
+      ).toEqual([]);
+    }
+  });
+
+  it('requires start where it anchors the cycle', () => {
+    const rule = valid.rules[0];
+    for (const recurrence of [
+      { frequency: 'monthly' },
+      { frequency: 'weekly' },
+      { frequency: 'biweekly' },
+      { frequency: 'quarterly', dayOfMonth: 1 },
+      { frequency: 'yearly', dayOfMonth: 1 },
+    ]) {
+      const errors = validateBudgetConfig({
+        ...valid,
+        rules: [{ ...rule, recurrence }],
+      });
+      expect(errors.join(' ')).toContain('recurrence.start is required');
+    }
+  });
+
+  it('matches overrides against a start-less rule', () => {
+    const errors = validateBudgetConfig({
+      ...valid,
+      rules: [
+        {
+          ...valid.rules[0],
+          recurrence: { frequency: 'monthly', dayOfMonth: 1 },
+        },
+      ],
+      overrides: [{ ruleId: 'rent', date: '2026-08-01', skip: true }],
+    });
+    expect(errors).toEqual([]);
   });
 });

@@ -1,6 +1,6 @@
 import type { BudgetConfig, MoneyMovement, Rule } from '@/types';
 import { isValidDate } from './dates';
-import { expandOccurrences, isTransfer } from './ledger';
+import { expandOccurrences, isTransfer, recurrenceNeedsStart } from './ledger';
 import { resolveBaseCurrency } from './money';
 
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -27,12 +27,16 @@ export function validateBudgetConfig(data: unknown): string[] {
   const config = data as Partial<BudgetConfig>;
 
   if (!config.meta?.name) errors.push('meta.name is required.');
+  const forecastFrom = config.meta?.forecastFrom ?? '';
+  if (!isValidDate(forecastFrom)) {
+    errors.push('meta.forecastFrom must be a valid YYYY-MM-DD date.');
+  }
   if (!Array.isArray(config.accounts) || config.accounts.length === 0) {
     errors.push('accounts must be a non-empty array.');
     return errors;
   }
 
-  const base = resolveBaseCurrency(config.meta ?? { name: '' });
+  const base = resolveBaseCurrency(config.meta ?? {});
   if (!CURRENCY_PATTERN.test(base)) {
     errors.push(
       `meta.baseCurrency must be a 3-letter ISO 4217 code (got "${base}").`
@@ -132,8 +136,13 @@ export function validateBudgetConfig(data: unknown): string[] {
         `${label}.recurrence.frequency must be one of: ${FREQUENCIES.join(', ')}.`
       );
     }
-    if (!rule.recurrence.start || !isValidDate(rule.recurrence.start)) {
+    const { start, frequency, dayOfMonth } = rule.recurrence;
+    if (start != null && !isValidDate(start)) {
       errors.push(`${label}.recurrence.start must be a valid YYYY-MM-DD date.`);
+    } else if (start == null && recurrenceNeedsStart(frequency, dayOfMonth)) {
+      errors.push(
+        `${label}.recurrence.start is required for ${frequency} rules${frequency === 'monthly' ? ' without dayOfMonth' : ''}.`
+      );
     }
     if (rule.recurrence.end && !isValidDate(rule.recurrence.end)) {
       errors.push(`${label}.recurrence.end must be a valid YYYY-MM-DD date.`);
@@ -166,9 +175,13 @@ export function validateBudgetConfig(data: unknown): string[] {
       if (
         recurrence &&
         FREQUENCIES.includes(recurrence.frequency) &&
-        isValidDate(recurrence.start) &&
+        (recurrence.start
+          ? isValidDate(recurrence.start)
+          : isValidDate(forecastFrom)) &&
         (!recurrence.end || isValidDate(recurrence.end)) &&
-        !expandOccurrences(recurrence, override.date).includes(override.date)
+        !expandOccurrences(recurrence, override.date, forecastFrom).includes(
+          override.date
+        )
       ) {
         errors.push(
           `${label}.date "${override.date}" does not match any scheduled occurrence of rule "${override.ruleId}" (use the rule's original date; moveTo shifts where it lands).`

@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const TEMPLATE = {
   version: 1,
-  meta: { name: 'Statement Batch Test', baseCurrency: 'USD' },
+  meta: {
+    name: 'Statement Batch Test',
+    baseCurrency: 'USD',
+    forecastFrom: '2026-01-01',
+  },
   accounts: [
     {
       id: 'mock-checking',

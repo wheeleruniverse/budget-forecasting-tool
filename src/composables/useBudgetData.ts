@@ -80,7 +80,7 @@ function formatCurrency(currency: string): (n: number) => string {
 function resetActiveCurrency(): void {
   const first = config.value?.accounts[0];
   activeCurrency.value =
-    first?.currency ?? resolveBaseCurrency(config.value?.meta ?? { name: '' });
+    first?.currency ?? resolveBaseCurrency(config.value?.meta ?? {});
   hiddenAccountIds.value = new Set();
 }
 
@@ -194,10 +194,7 @@ async function importStatements(
           (max, e) => (e.date > max ? e.date : max),
           ''
         );
-        if (
-          latestDate &&
-          (!c.meta.forecastFrom || latestDate >= c.meta.forecastFrom)
-        ) {
+        if (latestDate && latestDate >= c.meta.forecastFrom) {
           c.meta.forecastFrom = addDays(latestDate, 1);
         }
       });
@@ -439,7 +436,7 @@ export function useBudgetData() {
   });
 
   const baseCurrency = computed(() =>
-    resolveBaseCurrency(config.value?.meta ?? { name: '' })
+    resolveBaseCurrency(config.value?.meta ?? {})
   );
 
   const currencyOfAccount = (accountId: string): string =>

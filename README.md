@@ -186,7 +186,7 @@ pnpm build:clean  # format + lint + typecheck + test + build
     "name": "Personal",
     "baseCurrency": "EUR", // totals on the "All" tab are reported in this
     "fxRates": { "USD": 0.92 }, // units of base per 1 USD; maintained by hand
-    "forecastFrom": "2026-07-26" // rules only fire on/after this; auto-advances on import
+    "forecastFrom": "2026-07-26" // required; rules only fire on/after this; auto-advances on import
   },
   "accounts": [
     {
@@ -218,9 +218,9 @@ pnpm build:clean  # format + lint + typecheck + test + build
       "accountId": "bills-checking",
       "recurrence": {
         "frequency": "monthly", // daily | weekly | biweekly | semimonthly | monthly | quarterly | yearly
-        "start": "2026-07-01", // first occurrence; anchors weekly/biweekly cycles
+        "start": "2026-07-01", // first occurrence; optional for daily, semimonthly, and monthly with dayOfMonth
         "end": "2027-06-01", // optional; omit for endless
-        "dayOfMonth": 1, // optional; number or "last"
+        "dayOfMonth": 1, // number or "last"; defaults to the day from start
         "days": [1, 15] // semimonthly only
       }
     },
@@ -231,7 +231,7 @@ pnpm build:clean  # format + lint + typecheck + test + build
       "from": "bills-checking",
       "to": "personal-savings",
       "toAmount": 543.5, // cross-currency only: exact amount received
-      "recurrence": { "frequency": "monthly", "start": "2026-07-02" }
+      "recurrence": { "frequency": "monthly", "dayOfMonth": 2 } // no start: already running
     }
   ],
   "entries": [

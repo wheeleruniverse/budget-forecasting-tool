@@ -513,19 +513,23 @@ const FIELD_REFERENCE: Array<{
   {
     name: 'rules[].recurrence',
     description:
-      '`start` is the first occurrence (and anchors weekly/biweekly cycles); `end` (optional) is the last allowed date. Monthly and up accept `dayOfMonth`: a number 1–31 (clamped to short months) or `"last"`. Semimonthly uses `days`.',
-    example: `// monthly on the last day, ending mid-2027
+      '`start` is the first occurrence. It is required for weekly/biweekly (anchors the cycle), quarterly/yearly (sets the month), and monthly without `dayOfMonth`. Daily, semimonthly, and monthly with `dayOfMonth` may omit it to mean "already running" as of `meta.forecastFrom`; set it only when a rule begins in the future. `end` (optional) is the last allowed date. Monthly and up accept `dayOfMonth`: a number 1–31 (clamped to short months) or `"last"`. Semimonthly uses `days`.',
+    example: `// monthly on the last day, ending mid-2027 (no start: already running)
 "recurrence": {
   "frequency": "monthly",
-  "start": "2026-07-31",
   "end": "2027-06-30",
   "dayOfMonth": "last"
+}
+
+// yearly every March 1st, first in 2027 (start sets the month)
+"recurrence": {
+  "frequency": "yearly",
+  "start": "2027-03-01"
 }
 
 // on the 1st and 15th of every month
 "recurrence": {
   "frequency": "semimonthly",
-  "start": "2026-07-01",
   "days": [1, 15]
 }`,
   },
@@ -562,7 +566,7 @@ const FIELD_REFERENCE: Array<{
   "amount": 250.00,
   "from": "eur-joint-needs",
   "to": "eur-savings",
-  "recurrence": { "frequency": "monthly", "start": "2026-07-16" }
+  "recurrence": { "frequency": "monthly", "dayOfMonth": 16 }
 }
 
 // cross-currency: toAmount is what actually landed
@@ -573,13 +577,13 @@ const FIELD_REFERENCE: Array<{
   "toAmount": 1372.50,
   "from": "usd-checking",
   "to": "eur-bills",
-  "recurrence": { "frequency": "monthly", "start": "2026-07-04" }
+  "recurrence": { "frequency": "monthly", "dayOfMonth": 4 }
 }`,
   },
   {
     name: 'meta.forecastFrom',
     description:
-      'Rules only generate occurrences on or after this date (YYYY-MM-DD). Occurrences before it are expected to exist as imported entries, so there is no double-counting. Automatically advances to the day after the latest imported entry date each time you upload a statement. Set it manually to override.',
+      'Required. Rules only generate occurrences on or after this date (YYYY-MM-DD). Occurrences before it are expected to exist as imported entries, so there is no double-counting. Automatically advances to the day after the latest imported entry date each time you upload a statement. Set it manually to override.',
     example: `"meta": {
   "forecastFrom": "2026-07-26"
 }`,

@@ -6,6 +6,7 @@
     "fxRates": {
       "USD": 0.92
     },
+    "forecastFrom": "2026-07-01",
     "description": "Example data showing every feature, including multi-currency accounts. Open the Data dialog for a field reference, download this template, replace the values with your own, and upload it — your data never leaves your browser."
   },
   "accounts": [
@@ -69,7 +70,6 @@
       "accountId": "eur-joint-needs",
       "recurrence": {
         "frequency": "semimonthly",
-        "start": "2026-07-01",
         "days": [1, 15]
       }
     },
@@ -81,7 +81,6 @@
       "accountId": "eur-bills",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-01",
         "dayOfMonth": 1
       }
     },
@@ -93,7 +92,6 @@
       "accountId": "eur-bills",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-15",
         "dayOfMonth": 15
       }
     },
@@ -105,7 +103,6 @@
       "accountId": "eur-bills",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-25",
         "dayOfMonth": 25
       }
     },
@@ -133,7 +130,6 @@
       "accountId": "eur-joint-wants",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-12",
         "dayOfMonth": 12
       }
     },
@@ -145,7 +141,6 @@
       "accountId": "usd-checking",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-05",
         "dayOfMonth": 5
       }
     },
@@ -167,7 +162,6 @@
       "toAmount": 1372.5,
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-04",
         "dayOfMonth": 4
       }
     },
@@ -180,7 +174,6 @@
       "to": "eur-savings",
       "recurrence": {
         "frequency": "monthly",
-        "start": "2026-07-16",
         "dayOfMonth": 16
       }
     },

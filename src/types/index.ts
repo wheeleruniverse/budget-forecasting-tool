@@ -55,8 +55,13 @@ export type Frequency =
 
 export interface Recurrence {
   frequency: Frequency;
-  /** First occurrence date (YYYY-MM-DD). Also the anchor for weekly/biweekly cycles. */
-  start: string;
+  /**
+   * First occurrence date (YYYY-MM-DD). Also the anchor for weekly/biweekly
+   * cycles and the month for quarterly/yearly. Optional for daily,
+   * semimonthly, and monthly with dayOfMonth: omitted means the rule is
+   * already running as of meta.forecastFrom.
+   */
+  start?: string;
   /** Optional inclusive last date. Omit for endless. */
   end?: string;
   /** monthly/quarterly/yearly: day of month, or 'last'. Defaults to the day from start. */
@@ -126,9 +131,8 @@ export interface BudgetMeta {
    * Rules only generate occurrences on or after this date (YYYY-MM-DD).
    * Occurrences before it are expected to exist as imported entries.
    * Automatically advances to the day after the latest imported entry date.
-   * Omit to generate all rule occurrences (legacy behaviour).
    */
-  forecastFrom?: string;
+  forecastFrom: string;
   description?: string;
 }
 

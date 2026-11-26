@@ -12,7 +12,11 @@ function monthsAgo(n: number): string {
 
 const TEMPLATE = {
   version: 1,
-  meta: { name: 'Category View Test', baseCurrency: 'USD' },
+  meta: {
+    name: 'Category View Test',
+    baseCurrency: 'USD',
+    forecastFrom: '2026-01-01',
+  },
   accounts: [
     {
       id: 'card',
